@@ -735,6 +735,7 @@ function AuthWrapper() {
         session
       }
     }) => {
+      console.log("getSession:", session);
       if (session) checkAccess(session.user);else setAuthState("login");
     });
     // 인증 상태 변화 감지 (OAuth 리디렉션 후)
@@ -742,7 +743,8 @@ function AuthWrapper() {
       data: {
         subscription
       }
-    } = sb.auth.onAuthStateChange((_event, session) => {
+    } = sb.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event, session);
       if (session) checkAccess(session.user);else {
         setAuthState("login");
         setUser(null);
