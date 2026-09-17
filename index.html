@@ -23,7 +23,12 @@ const {
   useEffect
 } = React;
 const RAW = window.__RAW;
-const sb = window.supabase.createClient("https://gjxaxkutzntywjenrein.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqeGF4a3V0em50eXdqZW5yZWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2MTgzNDEsImV4cCI6MjEwNTE5NDM0MX0.6Tx3JXajRj_WhrfeOKE2dScS5v6KzFmwc-pstIR4WYc");
+const sb = window.supabase.createClient("https://gjxaxkutzntywjenrein.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqeGF4a3V0em50eXdqZW5yZWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2MTgzNDEsImV4cCI6MjEwNTE5NDM0MX0.6Tx3JXajRj_WhrfeOKE2dScS5v6KzFmwc-pstIR4WYc", {
+  auth: {
+    detectSessionInUrl: true,
+    flowType: "implicit"
+  }
+});
 function initState() {
   const base = {
     materials: JSON.parse(JSON.stringify(RAW.materials)),
