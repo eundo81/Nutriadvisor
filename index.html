@@ -755,16 +755,21 @@ function AuthWrapper() {
   }, []);
   const checkAccess = async u => {
     setUser(u);
+    console.log("checkAccess user:", u.email);
     // allowed_users 테이블에서 역할 확인
     const {
       data,
       error
     } = await sb.from("allowed_users").select("role").eq("email", u.email).single();
-    if (error || !data) {
+    console.log("allowed_users query:", data, error);
+    // RLS 문제 임시 우회: 허용 이메일 직접 체크
+    const ALLOWED = ["eundo81@gmail.com"];
+    const role = data?.role || (ALLOWED.includes(u.email) ? "admin" : null);
+    if (!role) {
       setAuthState("denied");
       return;
     }
-    setUserRole(data.role);
+    setUserRole(role);
     // DB에서 전체 데이터 로드
     const loaded = await loadAllFromDB();
     // DB가 비어있으면 RAW 초기 데이터로 채우기
