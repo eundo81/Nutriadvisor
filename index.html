@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>뉴트리어드바이저 원료관리</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;overflow:hidden}</style>
+</head>
+<body>
+<div id="root"></div>
+<script id="raw-data" type="application/json">{"materials": [{"id": "MAT001", "name": "정제수", "vendor": "자체제조", "vendorCode": "", "oldCode": "", "oldCodeRaw": "정제수", "newCode": "1LQA004A", "stock": 0, "incoming": 0, "isWater": true, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT002", "name": "Glycerin (Eloglyn R 95)", "vendor": "케이원씨앤씨(거래중단)", "vendorCode": "KKONC", "oldCode": "RM-GLYC-STD-KKONC", "oldCodeRaw": "RM-GLYC-STD-KKONC", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT003", "name": "Glycerine 99.5% USP", "vendor": "플라나(애경)", "vendorCode": "KFLAM", "oldCode": "RM-GLYC-STD-KFLAM", "oldCodeRaw": "RM-GLYC-STD-KFLAM", "newCode": "1LQA001A", "stock": 980000, "incoming": 500000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT004", "name": "이노셉", "vendor": "자체제조", "vendorCode": "", "oldCode": "", "oldCodeRaw": "이노셉", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": true, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT005", "name": "1,2-헥산디올", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)INGS-STD-KSEGA", "oldCodeRaw": "RM-(B)INGS-STD-KSEGA", "newCode": "", "stock": 30000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT006", "name": "Caprylyl Glycol", "vendor": "네이처소스", "vendorCode": "KNEIS", "oldCode": "RM-(B)DJO8-STD-KNEIS", "oldCodeRaw": "RM-(B)DJO8-STD-KNEIS", "newCode": "", "stock": 9000, "incoming": 15000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT007", "name": "4-HAP (Hydroxyacetophenone)", "vendor": "네이처소스", "vendorCode": "KNEIS", "oldCode": "RM-(B)D4HP-STD-KNEIS", "oldCodeRaw": "RM-(B)D4HP-STD-KNEIS", "newCode": "", "stock": 28000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT008", "name": "부틸렌글라이콜 (Carfil 1,3BG)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)CBG1-STD-KSEGA", "oldCodeRaw": "RM-(B)CBG1-STD-KSEGA", "newCode": "1LQA003A", "stock": 15000, "incoming": 60000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT009", "name": "L-menthol", "vendor": "해피콜", "vendorCode": "KHPCL", "oldCode": "RM-MNTL-STD-KHPCL", "oldCodeRaw": "RM-MNTL-STD-KHPCL", "newCode": "NA-RM04-1014", "stock": 24000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT010", "name": "Menthyl Lactate", "vendor": "네이처소스", "vendorCode": "KNEIS", "oldCode": "RM-MELT-STD-KNEIS", "oldCodeRaw": "RM-MELT-STD-KNEIS", "newCode": "1ACA021A", "stock": 20000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT011", "name": "HCO-60", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)HCO6-STD-KSEGA", "oldCodeRaw": "RM-(B)HCO6-STD-KSEGA", "newCode": "", "stock": 6000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT012", "name": "Hydrolyzed Collagen (STD)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-COLL-STD-KSEGA", "oldCodeRaw": "RM-COLL-STD-KSEGA", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT013", "name": "Hydrolyzed Collagen (VEG)", "vendor": "주피터인터내셔널", "vendorCode": "KJPIN", "oldCode": "RM-COLL-VEG-KJPIN", "oldCodeRaw": "RM-COLL-VEG-KJPIN", "newCode": "1ACA016A", "stock": 100000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT014", "name": "Hydrolyzed Collagen (FISH)", "vendor": "누리바이오", "vendorCode": "KNUBI", "oldCode": "RM-COLL-FISH-KNUBI", "oldCodeRaw": "RM-COLL-FISH-KNUBI", "newCode": "1ACA047A", "stock": 16000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT015", "name": "Glutathione", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-GLUT-STD-KSEGA", "oldCodeRaw": "RM-GLUT-STD-KSEGA", "newCode": "", "stock": 1600, "incoming": 1000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT016", "name": "아데노신", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-ADEN-STD-KSEGA", "oldCodeRaw": "RM-ADEN-STD-KSEGA", "newCode": "1ACA013A", "stock": 300, "incoming": 1000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT017", "name": "나이아신아마이드 (KHPCL)", "vendor": "해피콜", "vendorCode": "KHPCL", "oldCode": "RM-NIAC-STD-KHPCL", "oldCodeRaw": "RM-NIAC-STD-KHPCL", "newCode": "", "stock": 28000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT018", "name": "Niacinamide PC", "vendor": "세로켐", "vendorCode": "KSERO", "oldCode": "RM-NIAC-STD-KSERO", "oldCodeRaw": "RM-NIAC-STD-KSERO", "newCode": "1ACA045A", "stock": 0, "incoming": 25000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT019", "name": "EDTA-2Na", "vendor": "해피콜", "vendorCode": "KHPCL", "oldCode": "RM-(B)EDT2-STD-KHPCL", "oldCodeRaw": "RM-(B)EDT2-STD-KHPCL", "newCode": "", "stock": 14000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT020", "name": "EDTA-2Na", "vendor": "ACE BIOPHARM CO., LTD.", "vendorCode": "KACEB", "oldCode": "RM-EDTA-P099-KACEB", "oldCodeRaw": "RM-EDTA-P099-KACEB", "newCode": "1ACA001A", "stock": 25000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT021", "name": "CMC-Na (10MCB)", "vendor": "보락", "vendorCode": "KBORR", "oldCode": "RM-SCMC-STD-KBORR", "oldCodeRaw": "RM-SCMC-STD-KBORR", "newCode": "", "stock": 8000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT022", "name": "잔탄검(Keltrol F)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-XANT-STD-KSEGA", "oldCodeRaw": "RM-XANT-STD-KSEGA", "newCode": "", "stock": 8000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT023", "name": "잔탄검(Keltrol F)", "vendor": "주피터인터내셔널", "vendorCode": "KJPIN", "oldCode": "RM-XANT-F-KJPIN", "oldCodeRaw": "RM-XANT-F-KJPIN", "newCode": "1BSA005A", "stock": 0, "incoming": 25000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT024", "name": "잔탄검 V", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "잔탄검 V", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT025", "name": "Viscomate NP-700", "vendor": "그랜드바이오팜", "vendorCode": "KGRBI", "oldCode": "RM-(B)VISM-STD-KGRBI", "oldCodeRaw": "RM-(B)VISM-STD-KGRBI", "newCode": "", "stock": 100000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT026", "name": "Lavender Oil", "vendor": "아로마뱅크", "vendorCode": "KARMB", "oldCode": "RM-LAVO-STD-KARMB", "oldCodeRaw": "RM-LAVO-STD-KARMB", "newCode": "", "stock": 500, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT027", "name": "병풀추출물", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-CICA-STD-KDGNF", "oldCodeRaw": "RM-CICA-STD-KDGNF", "newCode": "1ACA014A", "stock": 30000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT028", "name": "Propolis ext.", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-PROP-STD-KDGNF", "oldCodeRaw": "RM-PROP-STD-KDGNF", "newCode": "", "stock": 2500, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT029", "name": "효모황기발효추출물", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-ASTR-STD-KDGNF", "oldCodeRaw": "RM-ASTR-STD-KDGNF", "newCode": "", "stock": 15000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT030", "name": "Sodium Hyaluronate", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(M)HYJB-1P-KSEGA", "oldCodeRaw": "RM-(M)HYJB-1P-KSEGA", "newCode": "", "stock": 34000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT031", "name": "Tartaric acid", "vendor": "해피콜", "vendorCode": "KHPCL", "oldCode": "RM-TART-STD-KHPCL", "oldCodeRaw": "RM-TART-STD-KHPCL", "newCode": "1ACA002A", "stock": 6000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT032", "name": "갈락토미세스여과물 (KDGNF)", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-GALF-STD-KDGNF", "oldCodeRaw": "RM-GALF-STD-KDGNF", "newCode": "1ACA048A", "stock": 400000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT033", "name": "갈락토미세스여과물 (KSEGA)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-GALF-STD-KSEGA", "oldCodeRaw": "RM-GALF-STD-KSEGA", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT034", "name": "Decaglyn 1-L / NIKKOL Decaglyn 1-L", "vendor": "비전씨앤티", "vendorCode": "KBJCT", "oldCode": "RM-(B)DGLN-STD-KBJCT", "oldCodeRaw": "RM-(B)DGLN-STD-KBJCT", "newCode": "1ACA023A", "stock": 22000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT035", "name": "베타인 / GENENCARE OSMS BA", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)GENC-STD-KSEGA", "oldCodeRaw": "RM-(B)GENC-STD-KSEGA", "newCode": "1ACA015A", "stock": 29000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT036", "name": "수크로오즈 (KMSC)", "vendor": "엠에스씨", "vendorCode": "KMSC", "oldCode": "RM-SUCR-STD-KMSC", "oldCodeRaw": "RM-SUCR-STD-KMSC", "newCode": "1ACA046A", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT037", "name": "수크로오즈 (KETC)", "vendor": "기타", "vendorCode": "KETC", "oldCode": "RM-SUCR-STD-KETC", "oldCodeRaw": "RM-SUCR-STD-KETC", "newCode": "", "stock": 15000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT038", "name": "알란토인", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-ALLT-STD-KSEGA", "oldCodeRaw": "RM-ALLT-STD-KSEGA", "newCode": "1ACA012A", "stock": 36000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT039", "name": "PDRN", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-PDRN-STD-KSEGA", "oldCodeRaw": "RM-PDRN-STD-KSEGA", "newCode": "", "stock": 900, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT040", "name": "Vitamin E Acetate", "vendor": "동양에프티", "vendorCode": "KDYFT", "oldCode": "RM-TOCO-STD-KDYFT", "oldCodeRaw": "RM-TOCO-STD-KDYFT", "newCode": "1ACA035A", "stock": 23000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT041", "name": "다이프로필렌글라이콜 (KSEGA)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-DPGD-STD-KSEGA", "oldCodeRaw": "RM-DPGD-STD-KSEGA", "newCode": "", "stock": 8000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT042", "name": "다이프로필렌글라이콜 (KSGWO)", "vendor": "상우", "vendorCode": "KSGWO", "oldCode": "RM-DPGD-STD-KSGWO", "oldCodeRaw": "RM-DPGD-STD-KSGWO", "newCode": "1LQA002A", "stock": 215000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT043", "name": "에틸헥실글리세린 (IndiGuard EHG)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)INGH-STD-KSEGA", "oldCodeRaw": "RM-(B)INGH-STD-KSEGA", "newCode": "1ACA052A", "stock": 15000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT044", "name": "정제LBG(MSC)#18742 (캐롭검, 수크로오스)", "vendor": "엠에스씨", "vendorCode": "KMSC", "oldCode": "RM-LBGU-STD-KMSC", "oldCodeRaw": "RM-LBGU-STD-KMSC", "newCode": "", "stock": 32000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT045", "name": "소듐알지네이트", "vendor": "엠에스씨", "vendorCode": "KMSC", "oldCode": "RM-(B)MSCG-STD-KMSC", "oldCodeRaw": "RM-(B)MSCG-STD-KMSC", "newCode": "1ACA050A", "stock": 14000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT046", "name": "agar(MSC RS-600-1)", "vendor": "엠에스씨", "vendorCode": "KMSC", "oldCode": "RM-AGAR-STD-KMSC", "oldCodeRaw": "RM-AGAR-STD-KMSC", "newCode": "1BSA003A", "stock": 16000, "incoming": 20000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT047", "name": "아크릴레이트코폴리머(Perisol 340F)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)P340-STD-KSEGA", "oldCodeRaw": "RM-(B)P340-STD-KSEGA", "newCode": "1ACA020A", "stock": 268000, "incoming": 100000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT048", "name": "Black Rose(MYW203)_아로마파크", "vendor": "아로마파크", "vendorCode": "KARMP", "oldCode": "RM-BLRO-STD-KARMP", "oldCodeRaw": "RM-BLRO-STD-KARMP", "newCode": "", "stock": 1900, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT049", "name": "판테놀", "vendor": "동양에프티", "vendorCode": "KDYFT", "oldCode": "RM-PANT-STD-KDYFT", "oldCodeRaw": "RM-PANT-STD-KDYFT", "newCode": "", "stock": 23000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT050", "name": "7중 히아루론산 Complex", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-(B)HA7C-STD-KDGNF", "oldCodeRaw": "RM-(B)HA7C-STD-KDGNF", "newCode": "1ACA017A", "stock": 20000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT051", "name": "4GF", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(M)4GFC-STD-KSEGA", "oldCodeRaw": "RM-(M)4GFC-STD-KSEGA", "newCode": "", "stock": 900, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT052", "name": "Nutri 10 complex", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-(M)NT10-STD-KDGNF", "oldCodeRaw": "RM-(M)NT10-STD-KDGNF", "newCode": "", "stock": 4000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT053", "name": "Olivatis 15C(올리브오일피이지-8에스터)", "vendor": "", "vendorCode": "KNOWN", "oldCode": "RM-OLIV-LIQ-UNKNOWN", "oldCodeRaw": "RM-OLIV-LIQ-UNKNOWN", "newCode": "", "stock": 11000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT054", "name": "호호바유", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-JOJO-RFDC-KSEGA", "oldCodeRaw": "RM-JOJO-RFDC-KSEGA", "newCode": "", "stock": 17000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT055", "name": "우레아 (KSEGA)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-UREA-STD-KSEGA", "oldCodeRaw": "RM-UREA-STD-KSEGA", "newCode": "", "stock": 100000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT056", "name": "푸마릭애씨드", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "푸마릭애씨드", "newCode": "", "stock": 17000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT057", "name": "팔미토일펜타펩타이드-4 / Palmitoyl Pentapeptide-4 500(BGH)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)PEP4-STD-KSEGA", "oldCodeRaw": "RM-(B)PEP4-STD-KSEGA", "newCode": "1ACA041A", "stock": 800, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT058", "name": "Bakuchiol (연구소 냉장고 보유)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)SYTA-STD-KSEGA", "oldCodeRaw": "RM-(B)SYTA-STD-KSEGA", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT059", "name": "White A 50 Base", "vendor": "", "vendorCode": "KCHMI", "oldCode": "RM-(M)WHTB-A50-KCHMI", "oldCodeRaw": "RM-(M)WHTB-A50-KCHMI", "newCode": "1CLA004A", "stock": 6000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT060", "name": "카라기난 HGE-A (KMSC)", "vendor": "엠에스씨", "vendorCode": "KMSC", "oldCode": "RM-CARR-HGEA-KMSC", "oldCodeRaw": "RM-CARR-HGEA-KMSC", "newCode": "1BSA006A", "stock": 28000, "incoming": 40000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT061", "name": "카라기난AKW(Jupiter) (아이리쉬모스, 포타슘클로라이드)", "vendor": "주피터인터내셔널", "vendorCode": "KJPIN", "oldCode": "RM-(B)CARR-AKW-KJPIN", "oldCodeRaw": "RM-(B)CARR-AKW-KJPIN", "newCode": "1BSA009A", "stock": 48000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT062", "name": "감초추출물 (KDGNF)", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-LICO-STD-KDGNF", "oldCodeRaw": "RM-LICO-STD-KDGNF", "newCode": "", "stock": 8000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT063", "name": "감초전초 추출물 (N)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-LICO-STD-KSEGA", "oldCodeRaw": "RM-LICO-STD-KSEGA", "newCode": "1ACA044A", "stock": 5000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT064", "name": "Volufline (가슴패치 볼륨) - 사급", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "Volufline", "newCode": "", "stock": 600, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT065", "name": "Castor Oil", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-CAST-FSG-KSEGA", "oldCodeRaw": "RM-CAST-FSG-KSEGA", "newCode": "", "stock": 15000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT066", "name": "Indiester T10MB", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)INDE-STD-KSEGA", "oldCodeRaw": "RM-(B)INDE-STD-KSEGA", "newCode": "", "stock": 16000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT067", "name": "AC-10LHP (Polyacrylic Acid)", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "AC-10LHP", "newCode": "", "stock": 1000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT068", "name": "티트리잎수출물", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-TTEE-STD-KDGNF", "oldCodeRaw": "RM-TTEE-STD-KDGNF", "newCode": "1ACA053A", "stock": 29000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT069", "name": "알로에베라잎추출물", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-ALOE-LIQ-KDGNF", "oldCodeRaw": "RM-ALOE-LIQ-KDGNF", "newCode": "", "stock": 19000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT070", "name": "Rheodol TW-L120(폴리솔베이트20)", "vendor": "기타", "vendorCode": "KETC", "oldCode": "RM-PS20-LIQ-KETC", "oldCodeRaw": "RM-PS20-LIQ-KETC", "newCode": "", "stock": 1500, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT071", "name": "녹차추출물", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-GTBE-LIQ-KDGNF", "oldCodeRaw": "RM-GTBE-LIQ-KDGNF", "newCode": "1ACA009A", "stock": 19000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT072", "name": "녹차수", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-GTWD-LIQ-KDGNF", "oldCodeRaw": "RM-GTWD-LIQ-KDGNF", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT073", "name": "Green A50 Base", "vendor": "CHEMLAND CO.,Ltd", "vendorCode": "KCHMI", "oldCode": "RM-(M)GRNB-A50-KCHMI", "oldCodeRaw": "RM-(M)GRNB-A50-KCHMI", "newCode": "1CLA001A", "stock": 5000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT074", "name": "말차가루", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-MTCH-POW-KSEGA", "oldCodeRaw": "RM-MTCH-POW-KSEGA", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT075", "name": "Aloe Vera 4P18524", "vendor": "", "vendorCode": "KHBHN", "oldCode": "RM-(B)FRHA-STD-KHBHN", "oldCodeRaw": "RM-(B)FRHA-STD-KHBHN", "newCode": "", "stock": 4000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT076", "name": "클로렐라불가리스추출물", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-CHLX-STD-KSEGA", "oldCodeRaw": "RM-CHLX-STD-KSEGA", "newCode": "", "stock": 20000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT077", "name": "팔미토일트라이펩타이드-1", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-PALT-S005-KSEGA", "oldCodeRaw": "RM-PALT-S005-KSEGA", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT078", "name": "아이오타 카라기난 (KJPIN)", "vendor": "주피터인터내셔널", "vendorCode": "KJPIN", "oldCode": "RM-CARR-STD-KJPIN", "oldCodeRaw": "RM-CARR-STD-KJPIN", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT079", "name": "카페인", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-CAFF-ANH-KSEGA", "oldCodeRaw": "RM-CAFF-ANH-KSEGA", "newCode": "1ACA043A", "stock": 20000, "incoming": 20000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT080", "name": "1,3-BG (SAFG)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)SAFG-STD-KSEGA", "oldCodeRaw": "RM-(B)SAFG-STD-KSEGA", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT081", "name": "다시마추출물 (KDGNF)", "vendor": "더가든오브내추럴솔루션", "vendorCode": "KDGNF", "oldCode": "RM-LAMI-STD-KDGNF", "oldCodeRaw": "RM-LAMI-STD-KDGNF", "newCode": "", "stock": 6000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT082", "name": "올레라케아아크멜라추출물", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-ACME-LIQ-KSEGA", "oldCodeRaw": "RM-ACME-LIQ-KSEGA", "newCode": "", "stock": 5000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT083", "name": "테아닌", "vendor": "", "vendorCode": "KEIBT", "oldCode": "RM-THEA-POW-KEIBT", "oldCodeRaw": "RM-THEA-POW-KEIBT", "newCode": "", "stock": 4700, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT084", "name": "무궁화추출물", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "무궁화추출물", "newCode": "", "stock": 19000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT085", "name": "누룩효모쌀발효여과물", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "누룩효모쌀발효여과물", "newCode": "", "stock": 5700, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT086", "name": "누룩효모쌀발효엑소좀", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "누룩효모쌀발효엑소좀", "newCode": "", "stock": 975, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT087", "name": "SAP (Sodium Ascorbyl Phosphate)", "vendor": "", "vendorCode": "KFLAM", "oldCode": "RM-SAPH-POW-KFLAM", "oldCodeRaw": "RM-SAPH-POW-KFLAM", "newCode": "", "stock": 5000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT088", "name": "Evermild GLDA 30", "vendor": "조이캠", "vendorCode": "KJOYC", "oldCode": "RM-GLDA-LIQ-KJOYC", "oldCodeRaw": "RM-GLDA-LIQ-KJOYC", "newCode": "1ACA006A", "stock": 25000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT089", "name": "GENU GUM Type RL-200 / 로스트빈검", "vendor": "주피터인터내셔널", "vendorCode": "KJPIN", "oldCode": "RM-LBGU-STD-KJPIN", "oldCodeRaw": "RM-LBGU-STD-KJPIN", "newCode": "1BSA007A", "stock": 50000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT090", "name": "Hiclean K", "vendor": "유에이티", "vendorCode": "KUAET", "oldCode": "RM-(M)HCLN-LIQ-KUAET", "oldCodeRaw": "RM-(M)HCLN-LIQ-KUAET", "newCode": "1ACA003A", "stock": 20000, "incoming": 40000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT091", "name": "IndiEster CEH MB", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-CEEH-L100-KSEGA", "oldCodeRaw": "RM-CEEH-L100-KSEGA", "newCode": "1OLA001A", "stock": 30000, "incoming": 90000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT092", "name": "OLIVEM® 2020 G", "vendor": "하나케어", "vendorCode": "KHANA", "oldCode": "RM-(B)OL20-LIQ-KHANA", "oldCodeRaw": "RM-(B)OL20-LIQ-KHANA", "newCode": "1ACA008A", "stock": 18000, "incoming": 18000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT093", "name": "ORAMIX CG 110", "vendor": "", "vendorCode": "KINTE", "oldCode": "RM-(B)OCG1-LIQ-KINTE", "oldCodeRaw": "RM-(B)OCG1-LIQ-KINTE", "newCode": "1ACA004A", "stock": 100000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT094", "name": "Kuraray Poval™ 5-88 (PVA-205)", "vendor": "해피콜", "vendorCode": "KHPCL", "oldCode": "RM-(B)P205-588-KHPCL", "oldCodeRaw": "RM-(B)P205-588-KHPCL", "newCode": "", "stock": 20000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT095", "name": "시어버터", "vendor": "", "vendorCode": "KSSUN", "oldCode": "RM-SHEA-STD-KSSUN", "oldCodeRaw": "RM-SHEA-STD-KSSUN", "newCode": "", "stock": 25000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT096", "name": "Rose Infused Water (장미수)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-ROSW-STD-KSEGA", "oldCodeRaw": "RM-ROSW-STD-KSEGA", "newCode": "1ACA049A", "stock": 180000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT097", "name": "D-Panthenol (판테놀)", "vendor": "동양에프티", "vendorCode": "KGOLD", "oldCode": "RM-PANT-STD-KGOLD", "oldCodeRaw": "RM-PANT-STD-KGOLD", "newCode": "1ACA025A", "stock": 25000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT098", "name": "Salmon Milt Extract Powder (PDRN)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(M)MSEP-STD-KSEGA", "oldCodeRaw": "RM-(M)MSEP-STD-KSEGA", "newCode": "1ACA036A", "stock": 1000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT099", "name": "Salicylic Acid", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT100", "name": "Kaolin Powder JP", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT101", "name": "DL-Camphor", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT102", "name": "Sodium Polyacrylate", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "", "newCode": "", "stock": 2000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT103", "name": "Potassium Chloride (염화칼륨)", "vendor": "한송", "vendorCode": "KHANS", "oldCode": "RM-KCLD-POW-KHANS", "oldCodeRaw": "RM-KCLD-POW-KHANS", "newCode": "1ACA030A", "stock": 1000, "incoming": 2000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT104", "name": "Pullulan", "vendor": "주피터인터내셔널", "vendorCode": "", "oldCode": "", "oldCodeRaw": "", "newCode": "1ACA031A", "stock": 20000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT105", "name": "SFG SB35 (시어버터)", "vendor": "썬화인글로벌", "vendorCode": "", "oldCode": "", "oldCodeRaw": "", "newCode": "1WXA001A", "stock": 25000, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT106", "name": "Dihydroxy aluminium aminoacetate", "vendor": "해피콜", "vendorCode": "KHPCL", "oldCode": "RM-ALAA-POW-KHPCL", "oldCodeRaw": "RM-ALAA-POW-KHPCL", "newCode": "1ACA005A", "stock": 0, "incoming": 25000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT107", "name": "Hydrovance Xtend (하이드록시에틸우레아)", "vendor": "서빈", "vendorCode": "KSEBI", "oldCode": "RM-HEUR-LIQ-KSEBI", "oldCodeRaw": "RM-HEUR-LIQ-KSEBI", "newCode": "1ACA022A", "stock": 0, "incoming": 60000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT108", "name": "Pep6 Complex 300", "vendor": "세가인터내셔날", "vendorCode": "", "oldCode": "", "oldCodeRaw": "신규", "newCode": "1ACA033A", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT109", "name": "Sodium Ascorbyl Phosphate", "vendor": "동양에프티", "vendorCode": "KFLAM", "oldCode": "RM-SAPH-POW-KFLAM", "oldCodeRaw": "RM-SAPH-POW-KFLAM", "newCode": "1ACA037A", "stock": 0, "incoming": 5000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT110", "name": "L-Glutathione Reduced (GSH) 99%", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-GLUT-STD-KSEGA", "oldCodeRaw": "RM-GLUT-STD-KSEGA", "newCode": "1ACA038A", "stock": 0, "incoming": 1000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT111", "name": "Palmitoyl Tripeptide-5 500(G)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-(B)PEP5-STD-KSEGA", "oldCodeRaw": "RM-(B)PEP5-STD-KSEGA", "newCode": "1ACA040A", "stock": 0, "incoming": 1000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT112", "name": "Sodium Hyaluronate", "vendor": "유에이티", "vendorCode": "KUAET", "oldCode": "RM-SHYA-STD-KUAET", "oldCodeRaw": "RM-SHYA-STD-KUAET", "newCode": "1ACA057A", "stock": 0, "incoming": 10000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT113", "name": "오이열매추출물", "vendor": "유에이티", "vendorCode": "", "oldCode": "", "oldCodeRaw": "신규", "newCode": "1ACA058A", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT114", "name": "Hydrolyzed Collagen (I’PERFORMANT)", "vendor": "젠슨리", "vendorCode": "KZENS", "oldCode": "RM-COLL-FISH-KZENS", "oldCodeRaw": "RM-COLL-FISH-KZENS", "newCode": "1ACA059A", "stock": 0, "incoming": 15000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT115", "name": "TW-Cera NP Lipo", "vendor": "트윈켐", "vendorCode": "KTWIN", "oldCode": "RM-CERA-LIQ-KTWIN", "oldCodeRaw": "RM-CERA-LIQ-KTWIN", "newCode": "1ACA060A", "stock": 0, "incoming": 10000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT116", "name": "SSC-Glucan (N)", "vendor": "세가인터내셔날", "vendorCode": "KSEGA", "oldCode": "RM-BGLU-020L-KSEGA", "oldCodeRaw": "RM-BGLU-020L-KSEGA", "newCode": "1ACA061A", "stock": 0, "incoming": 10000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT117", "name": "PVA-217", "vendor": "해피콜", "vendorCode": "KHPC", "oldCode": "RM-(B)P205-588-KHPC", "oldCodeRaw": "RM-(B)P205-588-KHPC", "newCode": "1BSA004A", "stock": 0, "incoming": 25000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT118", "name": "마이셀 GF8-030 (소듐카복시메틸셀룰로오스)", "vendor": "씨에스피", "vendorCode": "KCSPP", "oldCode": "RM-SCMC-STD-KCSPP", "oldCodeRaw": "RM-SCMC-STD-KCSPP", "newCode": "1BSA008A", "stock": 0, "incoming": 20000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT119", "name": "VISCOMED P-800", "vendor": "한농화성/㈜플라마", "vendorCode": "KFLAM", "oldCode": "RM-SPAC-P800-KFLAM", "oldCodeRaw": "RM-SPAC-P800-KFLAM", "newCode": "1BSA012A", "stock": 0, "incoming": 100000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT120", "name": "SKIN CARE H23390", "vendor": "고려에프앤에프", "vendorCode": "KKOFF", "oldCode": "RM-FRAG-H23390-KKOFF", "oldCodeRaw": "RM-FRAG-H23390-KKOFF", "newCode": "1FRA004A", "stock": 0, "incoming": 5000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT121", "name": "Volufline", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "Volufline", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT122", "name": "AC-10LHP", "vendor": "", "vendorCode": "", "oldCode": "", "oldCodeRaw": "AC-10LHP", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT123", "name": "N-GDS", "vendor": "유에이티", "vendorCode": "KUAET", "oldCode": "RM-(M)NGDS-GL50-KUAET", "oldCodeRaw": "RM-(M)NGDS-GL50-KUAET", "newCode": "1ACA070A", "stock": 0, "incoming": 20000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT124", "name": "SunCool WS-10", "vendor": "썬화인글로벌", "vendorCode": "KSSUN", "oldCode": "RM-MENT-WS10-KSSUN", "oldCodeRaw": "RM-MENT-WS10-KSSUN", "newCode": "1ACA067A", "stock": 0, "incoming": 5000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT125", "name": "식용색소 황색 4호", "vendor": "보락", "vendorCode": "", "oldCode": "", "oldCodeRaw": "신규", "newCode": "1CLA005A", "stock": 0, "incoming": 1000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT126", "name": "PATCH B82855", "vendor": "고려에프앤에프", "vendorCode": "KKOFF", "oldCode": "RM-FRAG-B82855-KKOFF", "oldCodeRaw": "RM-FRAG-B82855-KKOFF", "newCode": "1FRA005A", "stock": 0, "incoming": 5000, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}, {"id": "MAT127", "name": "CASHMERE COAT", "vendor": "세진코스텍", "vendorCode": "", "oldCode": "Z2607-52", "oldCodeRaw": "Z2607-52", "newCode": "", "stock": 0, "incoming": 0, "isWater": false, "isInno": false, "isInnoChild": false, "altIds": [], "spec": "", "lastStocktake": ""}], "recipes": [{"id": "RCP_001", "name": "캐나다 코엘 인쇄 아이패치", "code": "P2026-024", "ings": [{"matId": "MAT001", "pct": 49.63, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 30.0, "note": "", "nameRaw": ""}, {"matId": "MAT119", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 4.0, "note": "", "nameRaw": ""}, {"matId": "MAT107", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 1.4, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT117", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.4, "note": "", "nameRaw": ""}, {"matId": "MAT079", "pct": 0.3, "note": "", "nameRaw": ""}, {"matId": "MAT118", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT020", "pct": 0.12, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT010", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT093", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT124", "pct": 0.05, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_002", "name": "아베딕 VITA BRIGHT EYE PATCH", "code": "3HGPA011A", "ings": [{"matId": "MAT001", "pct": 49.998, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 30.0, "note": "", "nameRaw": ""}, {"matId": "MAT119", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT107", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT117", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 1.4, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT123", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.4, "note": "", "nameRaw": ""}, {"matId": "MAT020", "pct": 0.12, "note": "", "nameRaw": ""}, {"matId": "MAT126", "pct": 0.12, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT093", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT118", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT059", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.04, "note": "", "nameRaw": ""}, {"matId": "MAT109", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT110", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT125", "pct": 0.002, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_003", "name": "현장테스트 불용성 하이드로겔", "code": "3TSA006A", "ings": [{"matId": "MAT001", "pct": 52.109, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 30.0, "note": "", "nameRaw": ""}, {"matId": "MAT119", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT107", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 1.4, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT117", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.4, "note": "", "nameRaw": ""}, {"matId": "MAT020", "pct": 0.12, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT093", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT013", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT118", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.04, "note": "", "nameRaw": ""}, {"matId": "MAT120", "pct": 0.03, "note": "", "nameRaw": ""}, {"matId": "MAT112", "pct": 0.001, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_004", "name": "BIOLABSHOP Revitalizing", "code": "3HGTA007A", "ings": [{"matId": "MAT001", "pct": 70.219, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 15.0, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 4.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT008", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT060", "pct": 1.8, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT089", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT092", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT103", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT105", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT088", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT097", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT116", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT115", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT098", "pct": 0.001, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_005", "name": "BIOLABSHOP Brightening", "code": "3HGTA005A", "ings": [{"matId": "MAT001", "pct": 70.048, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 15.0, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 4.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT008", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT060", "pct": 1.8, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT089", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT092", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT103", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT105", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT088", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT110", "pct": 0.001, "note": "", "nameRaw": ""}, {"matId": "MAT109", "pct": 0.001, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_006", "name": "영국 비산사스 투명 하이드로겔 마스크팩", "code": "3HGNA001A", "ings": [{"matId": "MAT001", "pct": 74.8, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 15.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT060", "pct": 1.8, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT089", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT104", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT103", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT088", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT114", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT057", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT111", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT027", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_007", "name": "Jada Hydrogel Printed Eye P", "code": "3HGPA001A", "ings": [{"matId": "MAT001", "pct": 54.199, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 30.0, "note": "", "nameRaw": ""}, {"matId": "MAT119", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT107", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 1.4, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT117", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.4, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT093", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT118", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT020", "pct": 0.07, "note": "", "nameRaw": ""}, {"matId": "MAT108", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT079", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT113", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT112", "pct": 0.001, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_008", "name": "BIOLABSHOP Anti-Aging", "code": "3HGTA006A", "ings": [{"matId": "MAT001", "pct": 70.129, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 15.0, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 4.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT008", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT060", "pct": 1.8, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT089", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT092", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT103", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT105", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT088", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT057", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT098", "pct": 0.001, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_009", "name": "뷰티세움 하이드로겔 손발톱패치", "code": "3HG9A003A", "ings": [{"matId": "MAT001", "pct": 54.31, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 30.0, "note": "", "nameRaw": ""}, {"matId": "MAT119", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT107", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 1.4, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT117", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.4, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT093", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT118", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT020", "pct": 0.07, "note": "", "nameRaw": ""}, {"matId": "MAT127", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT097", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_010", "name": "천약선 자외선차단패치", "code": "3HG9A002A", "ings": [{"matId": "MAT001", "pct": 55.117, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 30.0, "note": "", "nameRaw": ""}, {"matId": "MAT119", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 1.4, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT117", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.4, "note": "", "nameRaw": ""}, {"matId": "MAT118", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT093", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT020", "pct": 0.07, "note": "", "nameRaw": ""}, {"matId": "MAT014", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.04, "note": "", "nameRaw": ""}, {"matId": "MAT009", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT063", "pct": 0.001, "note": "", "nameRaw": ""}, {"matId": "MAT110", "pct": 0.001, "note": "", "nameRaw": ""}, {"matId": "MAT032", "pct": 0.001, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_011", "name": "메가미 네덜란드 말차", "code": "3HGTA004A", "ings": [{"matId": "MAT001", "pct": 69.65, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 15.0, "note": "", "nameRaw": ""}, {"matId": "MAT091", "pct": 4.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT008", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT060", "pct": 1.8, "note": "", "nameRaw": ""}, {"matId": "MAT090", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT089", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT092", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT103", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT104", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT013", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT071", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT105", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT073", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT088", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_012", "name": "스킨나인 콜라겐펩타이드", "code": "3HGTA001A", "ings": [{"matId": "MAT001", "pct": 51.25, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 15.0, "note": "", "nameRaw": ""}, {"matId": "MAT047", "pct": 12.0, "note": "", "nameRaw": ""}, {"matId": "MAT096", "pct": 8.0, "note": "", "nameRaw": ""}, {"matId": "MAT032", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT089", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT014", "pct": 0.51, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.075, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.075, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.1, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.25, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT036", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT034", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT057", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT040", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT020", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT097", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_013", "name": "스킨나인 시카티트리", "code": "3HGTA002A", "ings": [{"matId": "MAT001", "pct": 43.67, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 15.0, "note": "", "nameRaw": ""}, {"matId": "MAT047", "pct": 12.0, "note": "", "nameRaw": ""}, {"matId": "MAT032", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT096", "pct": 8.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT068", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT027", "pct": 1.2, "note": "", "nameRaw": ""}, {"matId": "MAT089", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.075, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.075, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.1, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.25, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT036", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT034", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT063", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT020", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_014", "name": "스킨나인 PDRN", "code": "3HGTA003A", "ings": [{"matId": "MAT001", "pct": 51.77, "note": "", "nameRaw": ""}, {"matId": "MAT003", "pct": 15.0, "note": "", "nameRaw": ""}, {"matId": "MAT047", "pct": 12.0, "note": "", "nameRaw": ""}, {"matId": "MAT096", "pct": 8.0, "note": "", "nameRaw": ""}, {"matId": "MAT032", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT042", "pct": 3.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.3, "note": "", "nameRaw": ""}, {"matId": "MAT089", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.075, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.075, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.1, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.25, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT036", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT034", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT018", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT098", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT020", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_015", "name": "스포츠팩(260427)", "code": "3HGPA004A", "ings": [{"matId": "MAT002", "pct": 31.364, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.2, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.5, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT009", "pct": 0.005, "note": "", "nameRaw": ""}, {"matId": "MAT010", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT011", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT014", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT015", "pct": 0.001, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT017", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT021", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.4, "note": "", "nameRaw": ""}, {"matId": "MAT025", "pct": 6.0, "note": "", "nameRaw": ""}, {"matId": "MAT026", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT001", "pct": 60.2, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT027", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT028", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT029", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT030", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.2, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_016", "name": "아베딕 아이패치", "code": "3HGPA006A", "ings": [{"matId": "MAT003", "pct": 24.475, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.2, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.5, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT059", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT017", "pct": 2.2, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.044, "note": "", "nameRaw": ""}, {"matId": "MAT014", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT078", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT049", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT039", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT058", "pct": 0.001, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT025", "pct": 6.0, "note": "", "nameRaw": ""}, {"matId": "MAT001", "pct": 65.4, "note": "", "nameRaw": ""}, {"matId": "MAT027", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT062", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT029", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.2, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_017", "name": "지구발걸음", "code": "3HGPA007A", "ings": [{"matId": "MAT002", "pct": 29.36, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.2, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.5, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT041", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT121", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT013", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT017", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT011", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT065", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT066", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT021", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT025", "pct": 6.0, "note": "", "nameRaw": ""}, {"matId": "MAT026", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT001", "pct": 57.4, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT027", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT030", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT122", "pct": 3.0, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_018", "name": "레이트코리아", "code": "3HGPA008A", "ings": [{"matId": "MAT002", "pct": 27.45, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.3, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.75, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT041", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT013", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT017", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.04, "note": "", "nameRaw": ""}, {"matId": "MAT079", "pct": 0.01, "note": "⚠ 코드 없음 - 등록 필요", "nameRaw": ""}, {"matId": "MAT011", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT065", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT066", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT113", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT021", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT025", "pct": 6.0, "note": "", "nameRaw": ""}, {"matId": "MAT001", "pct": 57.4, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT027", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT030", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT067", "pct": 3.0, "note": "⚠ 코드 없음 - 등록 필요", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_019", "name": "링더벨", "code": "3HGPA009A", "ings": [{"matId": "MAT003", "pct": 29.32, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.2, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.5, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT042", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT013", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT087", "pct": 0.01, "note": "⚠ 원료코드 미등록 — RM코드 등록 후 수정", "nameRaw": ""}, {"matId": "MAT017", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT079", "pct": 0.1, "note": "⚠ 원료코드 미등록", "nameRaw": ""}, {"matId": "MAT011", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT065", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT066", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT113", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT021", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT025", "pct": 6.0, "note": "", "nameRaw": ""}, {"matId": "MAT048", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT001", "pct": 60.29, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT084", "pct": 0.1, "note": "⚠ 원료코드 없음 | INCI: Hibiscus Syriacus Flower Extract", "nameRaw": ""}, {"matId": "MAT085", "pct": 0.1, "note": "⚠ 원료코드 없음 | INCI 확인 필요", "nameRaw": ""}, {"matId": "MAT086", "pct": 0.01, "note": "⚠ 원료코드 없음 | INCI 확인 필요", "nameRaw": ""}, {"matId": "MAT030", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.2, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_020", "name": "PDRN", "code": "3HGTA008A", "ings": [{"matId": "MAT001", "pct": 62.958, "note": "", "nameRaw": ""}, {"matId": "MAT032", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT034", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT017", "pct": 2.1, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.042, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT037", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT014", "pct": 0.55, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT039", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT040", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT002", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT041", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.3, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.75, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT044", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT047", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT048", "pct": 0.02, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_021", "name": "라윤", "code": "3HGTA009A", "ings": [{"matId": "MAT001", "pct": 69.329, "note": "", "nameRaw": ""}, {"matId": "MAT032", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT034", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT017", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT037", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT013", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT015", "pct": 0.001, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT027", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT040", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT049", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT002", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT041", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.3, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.75, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT044", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT047", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT048", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_022", "name": "설뷰티", "code": "3HGTA010A", "ings": [{"matId": "MAT001", "pct": 74.01, "note": "", "nameRaw": ""}, {"matId": "MAT034", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.3, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.75, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT017", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT037", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT013", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT051", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT052", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT002", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT041", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT044", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT047", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT048", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_023", "name": "어파인", "code": "3HGPA005A", "ings": [{"matId": "MAT002", "pct": 26.97, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.2, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.5, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT053", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT040", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT049", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT054", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT106", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT055", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT021", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT025", "pct": 6.0, "note": "", "nameRaw": ""}, {"matId": "MAT026", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT001", "pct": 55.3, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT056", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT031", "pct": 0.1, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_024", "name": "카키자", "code": "3HGTA011A", "ings": [{"matId": "MAT001", "pct": 63.729, "note": "", "nameRaw": ""}, {"matId": "MAT032", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT034", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.3, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.75, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT017", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT037", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT014", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT057", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT027", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT058", "pct": 0.001, "note": "", "nameRaw": ""}, {"matId": "MAT081", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT040", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT049", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT002", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT041", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT044", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.1, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT047", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT048", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_025", "name": "리투아니아", "code": "3HGTA012A", "ings": [{"matId": "MAT001", "pct": 74.35, "note": "", "nameRaw": ""}, {"matId": "MAT034", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.225, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.3, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.75, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT017", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT037", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT014", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT039", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT002", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT041", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT044", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.1, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT023", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT047", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT048", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_026", "name": "스킨노바", "code": "3HGTA013A", "ings": [{"matId": "MAT001", "pct": 73.97, "note": "", "nameRaw": ""}, {"matId": "MAT034", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT017", "pct": 0.1, "note": "", "nameRaw": ""}, {"matId": "MAT016", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT037", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT013", "pct": 0.55, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT039", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT040", "pct": 0.01, "note": "", "nameRaw": ""}, {"matId": "MAT002", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT041", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.3, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.225, "note": "", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.225, "note": "", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.75, "note": "", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT044", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.1, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT046", "pct": 0.5, "note": "", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT047", "pct": 10.0, "note": "", "nameRaw": ""}, {"matId": "MAT048", "pct": 0.02, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_027", "name": "군납", "code": "3HGNA002A", "ings": [{"matId": "MAT001", "pct": 85.1, "note": "", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT037", "pct": 0.5, "note": "KMSC 기준", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.02, "note": "", "nameRaw": ""}, {"matId": "MAT038", "pct": 0.05, "note": "", "nameRaw": ""}, {"matId": "MAT068", "pct": 0.1, "note": "코드 미정", "nameRaw": ""}, {"matId": "MAT069", "pct": 0.1, "note": "코드 미정", "nameRaw": ""}, {"matId": "MAT002", "pct": 5.0, "note": "", "nameRaw": ""}, {"matId": "MAT080", "pct": 3.0, "note": "부틸렌글라이콜", "nameRaw": ""}, {"matId": "MAT041", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.2, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.5, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.1, "note": "IndiGuard EHG", "nameRaw": ""}, {"matId": "MAT070", "pct": 0.2, "note": "Perisol 340F 확인", "nameRaw": ""}, {"matId": "MAT044", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.0, "note": "", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.6, "note": "", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.2, "note": "", "nameRaw": ""}, {"matId": "MAT075", "pct": 0.01, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}, {"id": "RCP_028", "name": "호주말차", "code": "3HGNA003A", "ings": [{"matId": "MAT001", "pct": 74.43, "note": "자체제조", "nameRaw": ""}, {"matId": "MAT070", "pct": 0.2, "note": "세가", "nameRaw": ""}, {"matId": "MAT035", "pct": 0.2, "note": "세가", "nameRaw": ""}, {"matId": "MAT037", "pct": 0.5, "note": "해피콜", "nameRaw": ""}, {"matId": "MAT019", "pct": 0.02, "note": "세가", "nameRaw": ""}, {"matId": "MAT014", "pct": 0.1, "note": "누리바이오", "nameRaw": ""}, {"matId": "MAT071", "pct": 0.1, "note": "내추럴솔루션", "nameRaw": ""}, {"matId": "MAT072", "pct": 10.0, "note": "케미랜드", "nameRaw": ""}, {"matId": "MAT073", "pct": 0.25, "note": "내추럴솔루션", "nameRaw": ""}, {"matId": "MAT050", "pct": 0.1, "note": "케이원씨앤씨", "nameRaw": ""}, {"matId": "MAT002", "pct": 5.0, "note": "세가", "nameRaw": ""}, {"matId": "MAT080", "pct": 3.0, "note": "세가", "nameRaw": ""}, {"matId": "MAT041", "pct": 2.0, "note": "", "nameRaw": ""}, {"matId": "MAT005", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT006", "pct": 0.15, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT007", "pct": 0.2, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT008", "pct": 0.5, "note": "이노셉 구성원료", "nameRaw": ""}, {"matId": "MAT043", "pct": 0.1, "note": "세가", "nameRaw": ""}, {"matId": "MAT074", "pct": 0.2, "note": "MSC", "nameRaw": ""}, {"matId": "MAT044", "pct": 1.0, "note": "주피터", "nameRaw": ""}, {"matId": "MAT061", "pct": 1.0, "note": "MSC", "nameRaw": ""}, {"matId": "MAT045", "pct": 0.6, "note": "주피터", "nameRaw": ""}, {"matId": "MAT022", "pct": 0.2, "note": "", "nameRaw": ""}], "createdAt": "2026-09-16"}], "vendors": [{"id": "VND01", "name": "케이원씨앤씨(거래중단)", "code": "KKONC", "matIds": ["MAT002"]}, {"id": "VND02", "name": "플라나(애경)", "code": "KFLAM", "matIds": ["MAT003"]}, {"id": "VND03", "name": "세가인터내셔날", "code": "KSEGA", "matIds": ["MAT005", "MAT008", "MAT011", "MAT012", "MAT015", "MAT016", "MAT022", "MAT030", "MAT033", "MAT035", "MAT038", "MAT039", "MAT041", "MAT043", "MAT047", "MAT051", "MAT054", "MAT055", "MAT057", "MAT058", "MAT063", "MAT065", "MAT066", "MAT074", "MAT076", "MAT077", "MAT079", "MAT080", "MAT082", "MAT091", "MAT096", "MAT098", "MAT108", "MAT110", "MAT111", "MAT116"]}, {"id": "VND04", "name": "네이처소스", "code": "KNEIS", "matIds": ["MAT006", "MAT007", "MAT010"]}, {"id": "VND05", "name": "해피콜", "code": "KHPCL", "matIds": ["MAT009", "MAT017", "MAT019", "MAT031", "MAT094", "MAT106", "MAT117"]}, {"id": "VND06", "name": "주피터인터내셔널", "code": "KJPIN", "matIds": ["MAT013", "MAT023", "MAT061", "MAT078", "MAT089", "MAT104"]}, {"id": "VND07", "name": "누리바이오", "code": "KNUBI", "matIds": ["MAT014"]}, {"id": "VND08", "name": "세로켐", "code": "KSERO", "matIds": ["MAT018"]}, {"id": "VND09", "name": "ACE BIOPHARM CO., LTD.", "code": "KACEB", "matIds": ["MAT020"]}, {"id": "VND10", "name": "보락", "code": "KBORR", "matIds": ["MAT021", "MAT125"]}, {"id": "VND11", "name": "그랜드바이오팜", "code": "KGRBI", "matIds": ["MAT025"]}, {"id": "VND12", "name": "아로마뱅크", "code": "KARMB", "matIds": ["MAT026"]}, {"id": "VND13", "name": "더가든오브내추럴솔루션", "code": "KDGNF", "matIds": ["MAT027", "MAT028", "MAT029", "MAT032", "MAT050", "MAT052", "MAT062", "MAT068", "MAT069", "MAT071", "MAT072", "MAT081"]}, {"id": "VND14", "name": "비전씨앤티", "code": "KBJCT", "matIds": ["MAT034"]}, {"id": "VND15", "name": "엠에스씨", "code": "KMSC", "matIds": ["MAT036", "MAT044", "MAT045", "MAT046", "MAT060"]}, {"id": "VND16", "name": "기타", "code": "KETC", "matIds": ["MAT037", "MAT070"]}, {"id": "VND17", "name": "동양에프티", "code": "KDYFT", "matIds": ["MAT040", "MAT049", "MAT097", "MAT109"]}, {"id": "VND18", "name": "상우", "code": "KSGWO", "matIds": ["MAT042"]}, {"id": "VND19", "name": "아로마파크", "code": "KARMP", "matIds": ["MAT048"]}, {"id": "VND20", "name": "CHEMLAND CO.,Ltd", "code": "KCHMI", "matIds": ["MAT073"]}, {"id": "VND21", "name": "조이캠", "code": "KJOYC", "matIds": ["MAT088"]}, {"id": "VND22", "name": "유에이티", "code": "KUAET", "matIds": ["MAT090", "MAT112", "MAT113", "MAT123"]}, {"id": "VND23", "name": "하나케어", "code": "KHANA", "matIds": ["MAT092"]}, {"id": "VND24", "name": "한송", "code": "KHANS", "matIds": ["MAT103"]}, {"id": "VND25", "name": "썬화인글로벌", "code": "", "matIds": ["MAT105", "MAT124"]}, {"id": "VND26", "name": "서빈", "code": "KSEBI", "matIds": ["MAT107"]}, {"id": "VND27", "name": "젠슨리", "code": "KZENS", "matIds": ["MAT114"]}, {"id": "VND28", "name": "트윈켐", "code": "KTWIN", "matIds": ["MAT115"]}, {"id": "VND29", "name": "씨에스피", "code": "KCSPP", "matIds": ["MAT118"]}, {"id": "VND30", "name": "한농화성/㈜플라마", "code": "KFLAM", "matIds": ["MAT119"]}, {"id": "VND31", "name": "고려에프앤에프", "code": "KKOFF", "matIds": ["MAT120", "MAT126"]}, {"id": "VND32", "name": "세진코스텍", "code": "", "matIds": ["MAT127"]}]}</script>
+<script>
+window.__RAW = JSON.parse(document.getElementById("raw-data").textContent);
+window.__SB = window.supabase.createClient(
+  "https://gjxaxkutzntywjenrein.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqeGF4a3V0em50eXdqZW5yZWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2MTgzNDEsImV4cCI6MjEwNTE5NDM0MX0.6Tx3JXajRj_WhrfeOKE2dScS5v6KzFmwc-pstIR4WYc"
+);
+</script>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo, useCallback } = React;
+
+const RAW = window.__RAW;
+
+function initState() {
+  const base = {
+    materials: JSON.parse(JSON.stringify(RAW.materials)),
+    recipes:   JSON.parse(JSON.stringify(RAW.recipes)),
+    vendors:   JSON.parse(JSON.stringify(RAW.vendors)),
+    inReqs: [], inHist: [], plans: [],
+    matGroups: [],
+  };
+  try {
+    const d = JSON.parse(localStorage.getItem(LS) || "null");
+    if (d) {
+      if (d.materials?.length) base.materials = d.materials;
+      if (d.recipes?.length)   base.recipes   = d.recipes;
+      if (d.vendors?.length)   base.vendors   = d.vendors;
+      base.inReqs     = d.inReqs     || [];
+      base.inHist     = d.inHist     || [];
+      base.plans      = d.plans      || [];
+      base.matGroups  = d.matGroups  || [];
+    }
+  } catch(e) {}
+  return base;
+}
+function persist(s) {
+  try { localStorage.setItem(LS, JSON.stringify(s)); } catch(e) {}
+}
+
+// ── 유틸 ──────────────────────────────────────────────────
+const fmt  = n => Math.round(Number(n)||0).toLocaleString("ko-KR");
+const fmtG = n => fmt(n) + " g";
+const uid  = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+const td   = () => new Date().toISOString().slice(0,10);
+
+function csvDownload(headers, rows, filename) {
+  // 아티팩트에서 파일 다운로드가 차단되므로 CSV 텍스트를 모달로 표시
+  const lines = [headers.join("\t"), ...rows.map(r => r.map(c => String(c ?? "")).join("\t"))];
+  const text = lines.join("\n");
+  // 복사 가능한 텍스트 모달 표시
+  const ov = document.createElement("div");
+  ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;";
+  ov.innerHTML = `<div style="background:#fff;border-radius:10px;padding:20px;width:80%;max-width:700px;max-height:80vh;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <b style="font-size:13px">${filename} — 아래 내용을 복사하여 Excel에 붙여넣기 하세요</b>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="border:none;background:#eee;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:12px">✕ 닫기</button>
+    </div>
+    <button onclick="navigator.clipboard.writeText(this.nextElementSibling.value).then(()=>this.textContent='✓ 복사됨!').catch(()=>{})" style="background:#1a56db;color:#fff;border:none;border-radius:5px;padding:6px 14px;cursor:pointer;font-size:12px;align-self:flex-start">📋 클립보드 복사</button>
+    <textarea readonly style="flex:1;min-height:300px;font-family:monospace;font-size:11px;border:1px solid #ccc;border-radius:5px;padding:8px;resize:none;white-space:pre">${text}</textarea>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener("click", e => { if(e.target===ov) ov.remove(); });
+}
+
+function calcNeeds(plans, recipes) {
+  const needs = {};
+  for (const pl of plans) {
+    const rcp = recipes.find(r => r.id === pl.recipeId);
+    if (!rcp) continue;
+    for (const ing of rcp.ings) {
+      if (!ing.matId) continue;
+      needs[ing.matId] = (needs[ing.matId]||0) + pl.qty * ing.pct / 100;
+    }
+  }
+  return needs;
+}
+
+function pendingQty(matId, inReqs) {
+  return inReqs
+    .filter(r => r.matId===matId && r.status!=="cancelled" && r.status!=="received")
+    .reduce((s,r) => s+(r.orderQty||r.requestQty||0), 0);
+}
+
+// ── 스타일 상수 ────────────────────────────────────────────
+const C = {
+  nav:  "#1f3864",
+  bg:   "#f0ede8",
+  card: "#fff",
+  brd:  "#e0ddd6",
+  brd2: "#f0ede6",
+  txt:  "#1a1a18",
+  muted:"#888",
+  blue: "#1a56db",
+  green:"#0e7c3a",
+  red:  "#c62828",
+  redbg:"#fdecea",
+  redbrd:"#f5b7b7",
+  yelw: "#b45309",
+  yelwbg:"#fff8e1",
+  gbg:  "#e8f5e9",
+  bbg:  "#e8f0fe",
+};
+
+const css = {
+  app:   { fontFamily:"system-ui,sans-serif", fontSize:13, background:C.bg, color:C.txt, display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden" },
+  nav:   { background:C.nav, display:"flex", alignItems:"center", padding:"0 10px", height:42, flexShrink:0, gap:2, overflowX:"auto" },
+  logo:  { color:"#fff", fontSize:12, fontWeight:600, marginRight:12, whiteSpace:"nowrap" },
+  body:  { flex:1, display:"flex", overflow:"hidden", minHeight:0 },
+  sb:    { width:200, background:C.card, borderRight:`1px solid ${C.brd}`, display:"flex", flexDirection:"column", flexShrink:0, overflow:"hidden" },
+  sbhd:  { padding:"7px 10px", borderBottom:`1px solid ${C.brd}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 },
+  sbl:   { flex:1, overflowY:"auto" },
+  main:  { flex:1, display:"flex", flexDirection:"column", overflow:"hidden", minHeight:0 },
+  mhd:   { padding:"9px 14px", background:C.card, borderBottom:`1px solid ${C.brd}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0, gap:8 },
+  mb:    { flex:1, overflowY:"auto", padding:"12px 14px" },
+  stabs: { display:"flex", borderBottom:`1px solid ${C.brd}`, background:C.card, flexShrink:0, padding:"0 14px", overflowX:"auto" },
+};
+
+function ntab(on) { return { height:42, padding:"0 11px", color:on?"#fff":"rgba(255,255,255,.65)", background:"transparent", border:"none", borderBottom:on?"2px solid #60a5fa":"2px solid transparent", fontSize:12, whiteSpace:"nowrap", display:"flex", alignItems:"center", gap:3, cursor:"pointer", fontFamily:"inherit" }; }
+function stab(on) { return { padding:"7px 12px", fontSize:12, border:"none", background:"transparent", color:on?C.blue:C.muted, borderBottom:on?`2px solid ${C.blue}`:"2px solid transparent", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }; }
+function sbrow(on) { return { padding:"7px 10px", borderBottom:`1px solid ${C.brd2}`, cursor:"pointer", background:on?"#eff4ff":"transparent" }; }
+function btn(v) {
+  const map = { p:[C.blue,"#fff",C.blue], s:[C.green,"#fff",C.green], d:[C.redbg,C.red,C.redbrd], y:[C.yelwbg,C.yelw,"#fbbf24"] };
+  const [bg,cl,bd] = map[v]||["#fff",C.txt,"#ccc"];
+  return { display:"inline-flex", alignItems:"center", gap:3, padding:"4px 9px", borderRadius:5, border:`1px solid ${bd}`, background:bg, color:cl, fontSize:11, cursor:"pointer", whiteSpace:"nowrap", fontFamily:"inherit", lineHeight:1.4 };
+}
+function badge(v) {
+  const map = { r:[C.redbg,C.red], g:[C.gbg,C.green], b:[C.bbg,C.blue], y:[C.yelwbg,C.yelw], gray:["#f5f4f0","#666"] };
+  const [bg,cl] = map[v]||["#f5f4f0","#666"];
+  return { display:"inline-block", padding:"1px 6px", borderRadius:3, fontSize:10, fontWeight:500, background:bg, color:cl };
+}
+
+const TH  = { background:"#f5f4f0", padding:"6px 9px", textAlign:"left",  fontWeight:600, color:"#555", borderBottom:`1px solid ${C.brd}`, whiteSpace:"nowrap", fontSize:11 };
+const THR = { ...{background:"#f5f4f0", padding:"6px 9px", textAlign:"right", fontWeight:600, color:"#555", borderBottom:`1px solid ${C.brd}`, whiteSpace:"nowrap", fontSize:11} };
+const TD  = { padding:"6px 9px", borderBottom:`1px solid ${C.brd2}`, fontSize:11, verticalAlign:"middle" };
+const TDR = { padding:"6px 9px", borderBottom:`1px solid ${C.brd2}`, fontSize:11, textAlign:"right", fontVariantNumeric:"tabular-nums" };
+const INP = { flex:1, padding:"5px 8px", border:"1px solid #ccc", borderRadius:5, fontSize:12, background:"#fff", color:C.txt, fontFamily:"inherit" };
+const NI  = { width:90, padding:"3px 6px", border:"1px solid #ccc", borderRadius:4, textAlign:"right", fontSize:11, background:"#fff", fontFamily:"inherit" };
+const DI  = { padding:"3px 6px", border:"1px solid #ccc", borderRadius:4, fontSize:11, background:"#fff", fontFamily:"inherit" };
+const SR  = { padding:"5px 8px", border:"1px solid #ccc", borderRadius:5, fontSize:11, background:"#fff", fontFamily:"inherit" };
+const FBOX= { background:C.card, border:`1px solid ${C.brd}`, borderRadius:7, padding:"12px 14px", marginBottom:10 };
+const FROW= { display:"flex", gap:8, alignItems:"center", marginBottom:7 };
+const FLBL= { fontSize:11, color:"#555", width:76, flexShrink:0, fontWeight:500 };
+const TBL = { border:`1px solid ${C.brd}`, borderRadius:7, overflow:"hidden", background:C.card, marginBottom:10, width:"100%" };
+
+// ── 확인 다이얼로그 컴포넌트 ─────────────────────────────
+function Confirm({ msg, onOk, onCancel }) {
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.4)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ background:C.card, borderRadius:10, padding:"20px 22px", width:300, boxShadow:"0 8px 24px rgba(0,0,0,.18)" }}>
+        <div style={{ fontSize:13, marginBottom:14, lineHeight:1.5 }}>{msg}</div>
+        <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
+          <button style={btn()} onClick={onCancel}>취소</button>
+          <button style={btn("d")} onClick={onOk}>확인</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 입력 다이얼로그 컴포넌트 ─────────────────────────────
+function InputDlg({ title, label, defaultVal, onOk, onCancel }) {
+  const [val, setVal] = useState(String(defaultVal||""));
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.4)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ background:C.card, borderRadius:10, padding:"20px 22px", width:300, boxShadow:"0 8px 24px rgba(0,0,0,.18)" }}>
+        <div style={{ fontSize:13, fontWeight:600, marginBottom:10 }}>{title}</div>
+        <div style={{ fontSize:11, color:C.muted, marginBottom:6 }}>{label}</div>
+        <input type="number" style={{ ...INP, marginBottom:14 }} value={val} onChange={e=>setVal(e.target.value)} autoFocus />
+        <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
+          <button style={btn()} onClick={onCancel}>취소</button>
+          <button style={btn("s")} onClick={()=>onOk(parseInt(val)||0)}>확인</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// 메인 앱
+// ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// Supabase DB 유틸
+// ════════════════════════════════════════════════════════════
+const sb = window.__SB;
+
+async function dbLoad(table) {
+  const { data, error } = await sb.from(table).select('id, data');
+  if (error) { console.error('dbLoad', table, error); return []; }
+  return data.map(r => r.data);
+}
+
+async function dbUpsert(table, items) {
+  if (!items || items.length === 0) return;
+  const rows = items.map(item => ({ id: item.id, data: item, updated_at: new Date().toISOString() }));
+  const { error } = await sb.from(table).upsert(rows, { onConflict: 'id' });
+  if (error) console.error('dbUpsert', table, error);
+}
+
+async function dbDelete(table, id) {
+  const { error } = await sb.from(table).delete().eq('id', id);
+  if (error) console.error('dbDelete', table, error);
+}
+
+async function loadAllFromDB() {
+  const [materials, recipes, vendors, inReqs, inHist, plans, matGroups] = await Promise.all([
+    dbLoad('materials'), dbLoad('recipes'), dbLoad('vendors'),
+    dbLoad('in_reqs'), dbLoad('in_hist'), dbLoad('plans'), dbLoad('mat_groups'),
+  ]);
+  return { materials, recipes, vendors, inReqs, inHist, plans, matGroups };
+}
+
+async function saveAllToDB(st) {
+  await Promise.all([
+    dbUpsert('materials',  st.materials),
+    dbUpsert('recipes',    st.recipes),
+    dbUpsert('vendors',    st.vendors),
+    dbUpsert('in_reqs',   st.inReqs),
+    dbUpsert('in_hist',   st.inHist),
+    dbUpsert('plans',     st.plans),
+    dbUpsert('mat_groups',st.matGroups||[]),
+  ]);
+}
+
+// ════════════════════════════════════════════════════════════
+// 로그인 화면
+// ════════════════════════════════════════════════════════════
+function LoginPage({onLogin}) {
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+  const signIn = async () => {
+    setLoading(true); setErr("");
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.href }
+    });
+    if (error) { setErr(error.message); setLoading(false); }
+  };
+
+  return (
+    <div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f0ede8",fontFamily:"system-ui,sans-serif"}}>
+      <div style={{background:"#fff",borderRadius:12,padding:"40px 48px",boxShadow:"0 8px 32px rgba(0,0,0,.1)",textAlign:"center",width:340}}>
+        <div style={{fontSize:36,marginBottom:8}}>🧪</div>
+        <div style={{fontSize:18,fontWeight:700,color:"#1a1a18",marginBottom:4}}>뉴트리어드바이저</div>
+        <div style={{fontSize:12,color:"#888",marginBottom:32}}>원료 재고관리 시스템</div>
+        <button
+          style={{width:"100%",padding:"11px 0",background:"#fff",border:"1px solid #ddd",borderRadius:8,cursor:loading?"not-allowed":"pointer",fontSize:13,fontWeight:500,display:"flex",alignItems:"center",justifyContent:"center",gap:10,color:"#1a1a18",boxShadow:"0 1px 3px rgba(0,0,0,.08)"}}
+          onClick={signIn} disabled={loading}>
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+          {loading ? "로그인 중..." : "Google 계정으로 로그인"}
+        </button>
+        {err && <div style={{marginTop:12,fontSize:11,color:"#c62828"}}>{err}</div>}
+        <div style={{marginTop:24,fontSize:10,color:"#bbb"}}>승인된 계정만 접근 가능합니다</div>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// 접근 거부 화면
+// ════════════════════════════════════════════════════════════
+function AccessDenied({email, onSignOut}) {
+  return (
+    <div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f0ede8",fontFamily:"system-ui,sans-serif"}}>
+      <div style={{background:"#fff",borderRadius:12,padding:"40px 48px",boxShadow:"0 8px 32px rgba(0,0,0,.1)",textAlign:"center",width:360}}>
+        <div style={{fontSize:36,marginBottom:12}}>🚫</div>
+        <div style={{fontSize:16,fontWeight:700,color:"#c62828",marginBottom:8}}>접근 권한 없음</div>
+        <div style={{fontSize:12,color:"#666",marginBottom:4}}>{email}</div>
+        <div style={{fontSize:12,color:"#888",marginBottom:24}}>이 계정은 접근 권한이 없습니다.<br/>관리자에게 문의하세요.</div>
+        <button style={{padding:"8px 20px",background:"#f5f4f0",border:"1px solid #ccc",borderRadius:6,cursor:"pointer",fontSize:12}} onClick={onSignOut}>다른 계정으로 로그인</button>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// 인증 래퍼
+// ════════════════════════════════════════════════════════════
+function AuthWrapper() {
+  const [authState, setAuthState] = useState("loading"); // loading|login|denied|ok
+  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [dbSt, setDbSt] = useState(null);
+
+  useEffect(() => {
+    // 세션 확인
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (session) checkAccess(session.user);
+      else setAuthState("login");
+    });
+    // 인증 상태 변화 감지 (OAuth 리디렉션 후)
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+      if (session) checkAccess(session.user);
+      else { setAuthState("login"); setUser(null); setDbSt(null); }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const checkAccess = async (u) => {
+    setUser(u);
+    // allowed_users 테이블에서 역할 확인
+    const { data, error } = await sb.from("allowed_users").select("role").eq("email", u.email).single();
+    if (error || !data) { setAuthState("denied"); return; }
+    setUserRole(data.role);
+    // DB에서 전체 데이터 로드
+    const loaded = await loadAllFromDB();
+    // DB가 비어있으면 RAW 초기 데이터로 채우기
+    if (loaded.materials.length === 0) {
+      const init = {
+        materials: JSON.parse(JSON.stringify(RAW.materials)),
+        recipes:   JSON.parse(JSON.stringify(RAW.recipes)),
+        vendors:   JSON.parse(JSON.stringify(RAW.vendors)),
+        inReqs: [], inHist: [], plans: [], matGroups: [],
+      };
+      await saveAllToDB(init);
+      setDbSt(init);
+    } else {
+      if (!loaded.matGroups || loaded.matGroups.length === 0) loaded.matGroups = [];
+      setDbSt(loaded);
+    }
+    setAuthState("ok");
+  };
+
+  const signOut = async () => {
+    await sb.auth.signOut();
+    setAuthState("login"); setUser(null); setDbSt(null);
+  };
+
+  if (authState === "loading") return (
+    <div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f0ede8",fontFamily:"system-ui,sans-serif"}}>
+      <div style={{textAlign:"center",color:"#888"}}>
+        <div style={{fontSize:32,marginBottom:12}}>🧪</div>
+        <div style={{fontSize:13}}>로딩 중...</div>
+      </div>
+    </div>
+  );
+  if (authState === "login")  return <LoginPage />;
+  if (authState === "denied") return <AccessDenied email={user?.email} onSignOut={signOut} />;
+  if (authState === "ok" && dbSt) return <App initSt={dbSt} user={user} userRole={userRole} onSignOut={signOut} />;
+  return null;
+}
+
+
+function App({initSt, user, userRole, onSignOut}) {
+  const [st, setSt] = useState(()=>initSt);
+  const [page, setPage] = useState("recipe");
+  const [dlg, setDlg] = useState(null); // {type:"confirm"|"input", ...}
+  const [toast, setToast] = useState("");
+
+  const upd = useCallback((fn) => {
+    setSt(prev => {
+      const next = fn(JSON.parse(JSON.stringify(prev)));
+      persist(next);
+      saveAllToDB(next).catch(e=>console.error("DB 저장 오류:",e));
+      return next;
+    });
+  }, []);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(""), 2500); };
+  const showConfirm = (msg, onOk) => setDlg({ type:"confirm", msg, onOk });
+  const showInput = (title, label, def, onOk) => setDlg({ type:"input", title, label, def, onOk });
+  const showBackup = () => setDlg({ type:"backup" });
+
+  const matById = (id) => st.materials.find(m=>m.id===id);
+  const rcpById = (id) => st.recipes.find(r=>r.id===id);
+
+  const activePlans = st.plans.filter(p=>p.status==="plan");
+  const needs = useMemo(()=>calcNeeds(activePlans, st.recipes),[st.plans, st.recipes]);
+
+  const NAVS = [
+    {id:"recipe",    lbl:"📋 레시피"},
+    {id:"material",  lbl:"📦 원료"},
+    {id:"incoming",  lbl:"🚚 입고"},
+    {id:"production",lbl:"📅 생산계획"},
+    {id:"vendor",    lbl:"🏢 업체"},
+    {id:"groups",    lbl:"🔀 대체원료"},
+  ];
+  const resetAll = () => {
+    localStorage.removeItem("nutriadv_v4");
+    setSt({
+      materials: JSON.parse(JSON.stringify(RAW.materials)),
+      recipes:   JSON.parse(JSON.stringify(RAW.recipes)),
+      vendors:   JSON.parse(JSON.stringify(RAW.vendors)),
+      inReqs:[], inHist:[], plans:[],
+    });
+    showToast("데이터가 초기화됐습니다.");
+  };
+
+  return (
+    <div style={css.app}>
+      <div style={css.nav}>
+        <span style={css.logo}>🧪 뉴트리어드바이저</span>
+        {userRole==="admin"&&<span style={{fontSize:9,background:"rgba(255,255,255,.15)",color:"#fff",padding:"1px 5px",borderRadius:3,marginLeft:4}}>관리자</span>}
+        {NAVS.map(n=><button key={n.id} style={ntab(page===n.id)} onClick={()=>setPage(n.id)}>{n.lbl}</button>)}
+        <span style={{color:"rgba(255,255,255,.5)",fontSize:10,marginLeft:"auto"}}>{user?.email}</span>
+        <button style={{...ntab(false),fontSize:10,opacity:.6}} onClick={showBackup}>💾 백업</button>
+        <button style={{...ntab(false),fontSize:10,opacity:.6}} onClick={onSignOut}>로그아웃</button>
+      </div>
+      <div style={css.body}>
+        {page==="recipe"     && <RecipePage     st={st} upd={upd} matById={matById} rcpById={rcpById} showToast={showToast} showConfirm={showConfirm} setPage={setPage} userRole={userRole} />}
+        {page==="material"   && <MaterialPage   st={st} upd={upd} matById={matById} needs={needs} showToast={showToast} showConfirm={showConfirm} showInput={showInput} setPage={setPage} />}
+        {page==="incoming"   && <IncomingPage   st={st} upd={upd} matById={matById} needs={needs} showToast={showToast} showConfirm={showConfirm} />}
+        {page==="production" && <ProductionPage st={st} upd={upd} matById={matById} rcpById={rcpById} needs={needs} showToast={showToast} showConfirm={showConfirm} setPage={setPage} />}
+        {page==="vendor"     && <VendorPage     st={st} matById={matById} setPage={setPage} />}
+        {page==="groups"     && <GroupPage      st={st} upd={upd} matById={matById} showToast={showToast} showConfirm={showConfirm} />}
+      </div>
+      {dlg?.type==="confirm" && <Confirm msg={dlg.msg} onOk={()=>{dlg.onOk();setDlg(null);}} onCancel={()=>setDlg(null)} />}
+      {dlg?.type==="input"   && <InputDlg title={dlg.title} label={dlg.label} defaultVal={dlg.def} onOk={(v)=>{dlg.onOk(v);setDlg(null);}} onCancel={()=>setDlg(null)} />}
+      {dlg?.type==="backup"  && <BackupDlg st={st} setSt={setSt} onClose={()=>setDlg(null)} showToast={showToast} />}
+      {toast && <div style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",background:"#1a1a18",color:"#fff",padding:"7px 16px",borderRadius:20,fontSize:12,zIndex:999}}>{toast}</div>}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// 1. 레시피
+// ════════════════════════════════════════════════════════════
+function RecipePage({st,upd,matById,rcpById,showToast,showConfirm,setPage,userRole}) {
+  const [q,setQ]=useState("");
+  const [sel,setSel]=useState(null);
+  const [mode,setMode]=useState("view"); // view|edit|add
+  const [form,setForm]=useState({name:"",code:""});
+  const [ingQ,setIngQ]=useState("");
+  const [newIngs,setNewIngs]=useState([]);
+
+  const rcp = sel ? rcpById(sel) : null;
+  const filt = st.recipes.filter(r=>!q||(r.name+r.code).toLowerCase().includes(q.toLowerCase())).sort((a,b)=>a.name.localeCompare(b.name,"ko"));
+  const ingHits = ingQ ? st.materials.filter(m=>m.name.toLowerCase().includes(ingQ.toLowerCase())||m.newCode.includes(ingQ)||m.oldCode.includes(ingQ)).slice(0,8) : [];
+
+  const startEdit=()=>{ setForm({name:rcp.name,code:rcp.code||""}); setMode("edit"); };
+  const saveEdit=()=>{ upd(s=>{const r=s.recipes.find(x=>x.id===sel);if(r){r.name=form.name;r.code=form.code;}return s;}); setMode("view"); showToast("저장됐습니다."); };
+  const doDelete=()=>showConfirm("이 레시피를 삭제할까요? 복구할 수 없습니다.",()=>{upd(s=>{s.recipes=s.recipes.filter(r=>r.id!==sel);return s;});setSel(null);setMode("view");showToast("삭제됐습니다.");});
+  const saveNew=()=>{
+    if(!form.name.trim()){showToast("레시피명을 입력하세요.");return;}
+    const r={id:"RCP_"+uid(),name:form.name.trim(),code:form.code.trim(),ings:[...newIngs],createdAt:td()};
+    upd(s=>{s.recipes.push(r);return s;}); setSel(r.id); setMode("view"); setNewIngs([]); showToast("추가됐습니다.");
+  };
+
+  return (
+    <div style={css.body}>
+      <div style={css.sb}>
+        <div style={css.sbhd}>
+          <span style={{fontSize:11,fontWeight:600,color:C.muted,textTransform:"uppercase"}}>레시피 ({st.recipes.length})</span>
+          {userRole==="admin"&&<button style={btn("p")} onClick={()=>{setSel(null);setMode("add");setForm({name:"",code:""});setNewIngs([]);}}>＋추가</button>}
+        </div>
+        <input style={{...SR,margin:"6px 8px",width:"calc(100% - 16px)"}} placeholder="레시피명·코드" value={q} onChange={e=>setQ(e.target.value)} />
+        <div style={css.sbl}>
+          {filt.map(r=>(
+            <div key={r.id} style={sbrow(sel===r.id)} onClick={()=>{setSel(r.id);setMode("view");}}>
+              <div style={{fontSize:12,fontWeight:500,color:sel===r.id?C.blue:C.txt}}>{r.name}</div>
+              <div style={{fontSize:10,color:C.muted}}>{r.code||"코드없음"}·{r.ings.length}개</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={css.main}>
+        {mode==="add" && (
+          <>
+            <div style={css.mhd}>
+              <span style={{fontSize:14,fontWeight:600}}>레시피 추가</span>
+              <div style={{display:"flex",gap:6}}><button style={btn("s")} onClick={saveNew}>💾 저장</button><button style={btn()} onClick={()=>setMode("view")}>취소</button></div>
+            </div>
+            <div style={css.mb}>
+              <div style={FBOX}>
+                <div style={FROW}><span style={FLBL}>레시피명</span><input style={INP} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="예: 아베딕 아이패치" /></div>
+                <div style={FROW}><span style={FLBL}>코드</span><input style={INP} value={form.code} onChange={e=>setForm({...form,code:e.target.value})} placeholder="예: 3HGPA011A" /></div>
+              </div>
+              <IngEditor ings={newIngs} setIngs={setNewIngs} matById={matById} ingQ={ingQ} setIngQ={setIngQ} ingHits={ingHits} onAdd={m=>{setNewIngs([...newIngs,{matId:m.id,pct:0,note:""}]);setIngQ("");}} />
+            </div>
+          </>
+        )}
+        {mode!=="add" && rcp && (
+          <>
+            <div style={css.mhd}>
+              <div>
+                <div style={{fontSize:14,fontWeight:600}}>{rcp.name}</div>
+                <div style={{fontSize:11,color:C.muted,marginTop:2}}>{rcp.code||""}·{rcp.ings.length}개·{rcp.createdAt}</div>
+              </div>
+              {mode==="view"
+                ? <div style={{display:"flex",gap:6}}>
+                    {userRole==="admin"&&<button style={btn()} onClick={startEdit}>✏️ 수정</button>}
+                    {userRole==="admin"&&<button style={btn("d")} onClick={doDelete}>🗑 삭제</button>}
+                    <button style={btn()} onClick={()=>{ const hdrs=["No.","원료명","업체","기존코드","신규코드","함량%","비고"]; const rows=rcp.ings.map((ing,i)=>{const m=matById(ing.matId);return[i+1,m?m.name:ing.nameRaw||"?",m?m.vendor:"",m?m.oldCode:"",m?m.newCode:"",ing.pct,ing.note||""];}); csvDownload(hdrs,rows,rcp.name+"_레시피.csv"); }}>⬇ 내보내기</button>
+                  </div>
+                : <div style={{display:"flex",gap:6}}><button style={btn("s")} onClick={saveEdit}>💾 저장</button><button style={btn()} onClick={()=>setMode("view")}>취소</button></div>}
+            </div>
+            <div style={css.mb}>
+              {mode==="view" ? (
+                <div style={{overflowX:"auto"}}>
+                  <table style={TBL}><tbody>
+                    <tr><th style={TH}>No.</th><th style={TH}>원료명</th><th style={TH}>업체</th><th style={TH}>기존코드</th><th style={TH}>신규코드</th><th style={THR}>함량%</th><th style={TH}>비고</th></tr>
+                    {rcp.ings.map((ing,i)=>{const m=matById(ing.matId);return(
+                      <tr key={i}><td style={{...TD,color:C.muted}}>{i+1}</td>
+                        <td style={TD}>{m?<span style={{color:C.blue,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setPage("material")}>{m.name}</span>:(ing.nameRaw||"?")}</td>
+                        <td style={{...TD,color:C.muted,fontSize:10}}>{m?.vendor||""}</td>
+                        <td style={{...TD,color:C.muted,fontSize:10}}>{m?.oldCode||""}</td>
+                        <td style={{...TD,color:C.blue,fontSize:10,fontWeight:500}}>{m?.newCode||""}</td>
+                        <td style={TDR}>{ing.pct.toFixed(3)}</td><td style={{...TD,color:C.muted}}>{ing.note||""}</td></tr>
+                    );})}
+                    <tr style={{background:"#f5f4f0"}}><td style={TD} colSpan={5}><b style={{color:"#666"}}>합 계</b></td><td style={{...TDR,fontWeight:600}}>{rcp.ings.reduce((s,i)=>s+i.pct,0).toFixed(3)}</td><td style={TD}></td></tr>
+                  </tbody></table>
+                </div>
+              ) : (
+                <>
+                  <div style={FBOX}>
+                    <div style={FROW}><span style={FLBL}>레시피명</span><input style={INP} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} /></div>
+                    <div style={FROW}><span style={FLBL}>코드</span><input style={INP} value={form.code} onChange={e=>setForm({...form,code:e.target.value})} /></div>
+                  </div>
+                  <div style={{overflowX:"auto"}}>
+                    <table style={TBL}><tbody>
+                      <tr><th style={TH}>No.</th><th style={TH}>원료명</th><th style={TH}>업체</th><th style={THR}>함량%</th><th style={TH}>삭제</th></tr>
+                      {rcp.ings.map((ing,i)=>{const m=matById(ing.matId);return(
+                        <tr key={i}><td style={{...TD,color:C.muted}}>{i+1}</td><td style={TD}>{m?.name||(ing.nameRaw||"?")}</td>
+                          <td style={{...TD,color:C.muted,fontSize:10}}>{m?.vendor||""}</td>
+                          <td style={TDR}><input type="number" style={NI} value={ing.pct} step="0.001" onChange={e=>upd(s=>{const r=s.recipes.find(x=>x.id===sel);if(r)r.ings[i].pct=parseFloat(e.target.value)||0;return s;})} /></td>
+                          <td style={TD}><button style={btn("d")} onClick={()=>upd(s=>{const r=s.recipes.find(x=>x.id===sel);if(r)r.ings.splice(i,1);return s;})}>✕</button></td>
+                        </tr>
+                      );})}
+                    </tbody></table>
+                  </div>
+                  <IngEditor ings={[]} setIngs={()=>{}} matById={matById} ingQ={ingQ} setIngQ={setIngQ} ingHits={ingHits}
+                    onAdd={m=>{upd(s=>{const r=s.recipes.find(x=>x.id===sel);if(r)r.ings.push({matId:m.id,pct:0,note:""});return s;});setIngQ("");}} />
+                </>
+              )}
+            </div>
+          </>
+        )}
+        {!rcp && mode!=="add" && <div style={{padding:40,textAlign:"center",color:C.muted}}>레시피를 선택하세요</div>}
+      </div>
+    </div>
+  );
+}
+
+function IngEditor({matById,ingQ,setIngQ,ingHits,onAdd}) {
+  return (
+    <div style={{position:"relative",marginTop:8}}>
+      <input style={{...SR,width:260}} placeholder="원료 검색하여 추가..." value={ingQ} onChange={e=>setIngQ(e.target.value)} />
+      {ingHits.length>0 && (
+        <div style={{position:"absolute",top:"100%",left:0,width:320,border:"1px solid #ccc",borderRadius:5,background:"#fff",zIndex:20,maxHeight:160,overflowY:"auto",boxShadow:"0 4px 12px rgba(0,0,0,.1)"}}>
+          {ingHits.map(m=>(
+            <div key={m.id} style={{padding:"5px 9px",cursor:"pointer",borderBottom:`1px solid ${C.brd2}`,fontSize:11}}
+              onMouseOver={e=>e.currentTarget.style.background="#f5f5f5"} onMouseOut={e=>e.currentTarget.style.background=""}
+              onClick={()=>onAdd(m)}>
+              <b>{m.name}</b><span style={{color:C.muted,marginLeft:6,fontSize:10}}>{m.newCode||m.oldCode||""} · {m.vendor}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// 2. 원료 관리
+// ════════════════════════════════════════════════════════════
+function MaterialPage({st,upd,matById,needs,showToast,showConfirm,showInput,setPage}) {
+  const [filter,setFilter]=useState("all");
+  const [q,setQ]=useState("");
+  const [lowDays,setLowDays]=useState(30);
+  const [selMat,setSelMat]=useState(null);
+
+  const all = st.materials.filter(m=>!m.isInnoChild);
+  const getAvail = m => m.stock + (st.inReqs.filter(r=>r.matId===m.id&&(r.status==="ordered"||r.status==="confirmed")&&!r.receivedAt).reduce((s,r)=>s+(r.orderQty||0),0));
+  const shortage = all.filter(m=>!m.isWater&&!m.isInno&&getAvail(m)-(needs[m.id]||0)<0).length;
+  const reqCnt = new Set(st.inReqs.filter(r=>r.status!=="cancelled"&&r.status!=="received").map(r=>r.matId)).size;
+
+  const filt = all.filter(m=>{
+    const ql=q.toLowerCase();
+    if(ql&&!m.name.toLowerCase().includes(ql)&&!m.newCode.includes(ql)&&!m.oldCode.includes(ql)&&!m.vendor.toLowerCase().includes(ql))return false;
+    const avail=getAvail(m); const n=needs[m.id]||0; const s=avail-n;
+    if(filter==="shortage")return !m.isWater&&!m.isInno&&s<0;
+    if(filter==="low")return !m.isWater&&!m.isInno&&s>=0&&s<n*0.3+1;
+    if(filter==="ok")return s>=0;
+    if(filter==="req")return st.inReqs.some(r=>r.matId===m.id&&r.status!=="cancelled"&&r.status!=="received");
+    return true;
+  });
+
+  const doRequest=(matId)=>{
+    upd(s=>{s.inReqs.push({id:"REQ_"+uid(),matId,requestQty:0,orderQty:0,status:"requested",requestedAt:td(),orderedAt:"",expectedDate:"",receivedAt:"",note:""});return s;});
+    showToast(matById(matId)?.name+" 입고 요청 등록됨"); setPage("incoming");
+  };
+
+  const selM = selMat ? matById(selMat) : null;
+
+  return (
+    <div style={{...css.body,flexDirection:"row"}}>
+      <div style={css.main}>
+        <div style={css.mhd}>
+          <span style={{fontSize:14,fontWeight:600}}>원료 관리</span>
+          <div style={{display:"flex",gap:6}}>
+            <button style={btn("p")} onClick={()=>setPage("stocktake")}>📋 재고 실사</button>
+            <button style={btn()} onClick={()=>csvDownload(["원료명","업체","신규코드","기존코드","현재재고(g)","입고예정(g)","가용재고(g)"],
+              all.map(m=>[m.name,m.vendor,m.newCode,m.oldCode,m.stock,m.incoming,getAvail(m)]),"원료재고_"+td()+".csv")}>⬇ 내보내기</button>
+          </div>
+        </div>
+        <div style={css.mb}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:10}}>
+            {[[all.length+"종","전체 원료",""],[shortage+"종","부족",C.red],[reqCnt+"종","요청중",C.blue],["","여유부족 기준",""]].map(([v,l,c],i)=>(
+              <div key={i} style={{background:C.card,border:`1px solid ${C.brd}`,borderRadius:7,padding:"9px 12px"}}>
+                <div style={{fontSize:10,color:C.muted,marginBottom:2}}>{l}</div>
+                {i<3?<div style={{fontSize:20,fontWeight:600,color:c||C.txt}}>{v}</div>
+                  :<select style={{fontSize:11,border:"1px solid #ccc",borderRadius:4,padding:"2px 4px"}} value={lowDays} onChange={e=>setLowDays(+e.target.value)}>
+                    <option value={7}>1주</option><option value={14}>2주</option><option value={30}>1개월</option><option value={90}>3개월</option>
+                  </select>}
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
+            {[["all","전체"],["shortage","부족"],["low","여유부족"],["ok","충분"],["req","요청중"]].map(([v,l])=>(
+              <button key={v} style={{...btn(v===filter?"p":undefined),padding:"3px 8px"}} onClick={()=>setFilter(v)}>{l}</button>
+            ))}
+            <input style={{...SR,marginLeft:"auto",width:170}} placeholder="원료명·코드·업체" value={q} onChange={e=>setQ(e.target.value)} />
+          </div>
+          <div style={{overflowX:"auto"}}>
+            <table style={TBL}><tbody>
+              <tr>
+                <th style={TH}>원료명</th><th style={TH}>신규코드</th><th style={TH}>업체</th>
+                <th style={THR}>현재재고(g)</th><th style={THR}>입고예정(g)</th><th style={THR}>가용재고(g)</th>
+                <th style={THR}>계획소요(g)</th><th style={TH}>상태</th><th style={TH}>입고요청</th>
+              </tr>
+              {filt.map(m=>{
+                const n=needs[m.id]||0; const avail=getAvail(m); const short=avail-n;
+                const incomingAmt = st.inReqs.filter(r=>r.matId===m.id&&(r.status==="ordered"||r.status==="confirmed")&&!r.receivedAt).reduce((s,r)=>s+(r.orderQty||0),0);
+                const isReq=st.inReqs.some(r=>r.matId===m.id&&r.status!=="cancelled"&&r.status!=="received");
+                let bdg=null;
+                if(m.isWater||m.isInno) bdg=<span style={badge("gray")}>자체</span>;
+                else if(short<0) bdg=<span style={badge("r")}>부족 {fmt(Math.round(short))}g</span>;
+                else bdg=<span style={badge("g")}>충분</span>;
+                return (
+                  <tr key={m.id} style={{background:selMat===m.id?"#f0f7ff":""}}>
+                    <td style={TD}><span style={{color:C.blue,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setSelMat(selMat===m.id?null:m.id)}>{m.name}</span></td>
+                    <td style={{...TD,color:C.blue,fontSize:10}}>{m.newCode}</td>
+                    <td style={{...TD,color:C.muted,fontSize:10}}>{m.vendor}</td>
+                    <td style={TDR}>{m.isWater||m.isInno?"자체":fmt(m.stock)}</td>
+                    <td style={{...TDR,color:C.blue}}>{m.isWater||m.isInno?"-":fmt(incomingAmt)}</td>
+                    <td style={{...TDR,color:short<0?C.red:"inherit",fontWeight:short<0?600:400}}>{m.isWater||m.isInno?"-":fmt(avail)}</td>
+                    <td style={{...TDR,color:n>0?C.blue:"inherit"}}>{n>0?fmt(Math.round(n)):"-"}</td>
+                    <td style={TD}>{bdg}</td>
+                    <td style={TD}>
+                      {!m.isWater&&!m.isInno&&(isReq
+                        ?<span style={badge("b")}>요청중</span>
+                        :<button style={btn()} onClick={()=>doRequest(m.id)}>📬 요청</button>)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+
+      {selM && (
+        <MatPanel m={selM} st={st} upd={upd} showToast={showToast} showInput={showInput} onClose={()=>setSelMat(null)} />
+      )}
+    </div>
+  );
+}
+
+function MatPanel({m,st,upd,showToast,showInput,onClose}) {
+  const [editing,setEditing]=useState(false);
+  const [form,setForm]=useState({});
+  const reqs = st.inReqs.filter(r=>r.matId===m.id&&r.status!=="cancelled"&&r.status!=="received");
+  const hist = st.inHist.filter(h=>h.matId===m.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+
+  const statusLabel={requested:"요청중",ordered:"발주완료",confirmed:"입고예정",received:"입고완료"};
+  const statusColor={requested:"b",ordered:"y",confirmed:"g",received:"gray"};
+
+  const receive=(reqId)=>{
+    const req=st.inReqs.find(r=>r.id===reqId);
+    if(!req)return;
+    const qty=req.orderQty||req.requestQty||0;
+    showInput("입고 완료 처리","실제 입고 수량(g)",qty,(v)=>{
+      upd(s=>{
+        const r=s.inReqs.find(x=>x.id===reqId);
+        const mat=s.materials.find(x=>x.id===m.id);
+        if(r){r.status="received";r.receivedAt=td();r.orderQty=v;}
+        if(mat)mat.stock+=v;
+        s.inHist.push({id:"H_"+uid(),matId:m.id,qty:v,date:td(),note:"입고완료"});
+        return s;
+      });
+      showToast(m.name+" "+fmtG(v)+" 입고 완료.");
+    });
+  };
+
+  return (
+    <div style={{width:300,background:C.card,borderLeft:`1px solid ${C.brd}`,display:"flex",flexDirection:"column",flexShrink:0,overflow:"hidden"}}>
+      <div style={{padding:"9px 12px",borderBottom:`1px solid ${C.brd}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+        <span style={{fontSize:13,fontWeight:600}}>{m.name}</span>
+        <div style={{display:"flex",gap:4}}>
+          <button style={btn()} onClick={()=>{if(editing){setEditing(false);}else{setForm({name:m.name,newCode:m.newCode,oldCode:m.oldCode,vendor:m.vendor,spec:m.spec||"",stock:m.stock});setEditing(true);}}}>
+            {editing?"취소":"✏️"}
+          </button>
+          <button style={btn()} onClick={onClose}>✕</button>
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"10px 12px"}}>
+        {editing ? (
+          <div>
+            {[["원료명","name","text"],["신규코드","newCode","text"],["기존코드","oldCode","text"],["업체명","vendor","text"],["현재재고(g)","stock","number"]].map(([l,k,t])=>(
+              <div key={k} style={{marginBottom:8}}>
+                <div style={{fontSize:10,color:C.muted,marginBottom:3}}>{l}</div>
+                <input type={t} style={{...INP,fontSize:11}} value={form[k]??""} onChange={e=>setForm({...form,[k]:t==="number"?parseInt(e.target.value)||0:e.target.value})} />
+              </div>
+            ))}
+            <button style={{...btn("s"),width:"100%",justifyContent:"center"}} onClick={()=>{upd(s=>{const mat=s.materials.find(x=>x.id===m.id);if(mat)Object.assign(mat,form);return s;});setEditing(false);showToast("수정됐습니다.");}}>저장</button>
+          </div>
+        ) : (
+          <>
+            <SectionTitle>기본 정보</SectionTitle>
+            {[["신규코드",m.newCode||"-",C.blue],["기존코드",m.oldCode||"-",""],["업체",m.vendor,""],["업체코드",m.vendorCode||"-",""],["현재재고",fmtG(m.stock),""],["최근실사",m.lastStocktake||"-",""]].map(([k,v,c])=>(
+              <KV key={k} k={k} v={v} c={c} />
+            ))}
+            {m.isInnoChild && <div style={{marginTop:4}}><span style={badge("gray")}>이노셉 구성원료</span></div>}
+
+            <SectionTitle>✅ 입고 완료 이력</SectionTitle>
+            {hist.length===0?<div style={{fontSize:11,color:C.muted}}>없음</div>:hist.map(h=>(
+              <div key={h.id} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:`1px solid ${C.brd2}`,fontSize:11}}>
+                <span style={{color:C.muted}}>{h.date}</span><span style={{color:C.green,fontWeight:500}}>+{fmtG(h.qty)}</span>
+              </div>
+            ))}
+
+            <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:5}}>
+              <button style={{...btn(),justifyContent:"center"}} onClick={()=>{upd(s=>{s.inReqs.push({id:"REQ_"+uid(),matId:m.id,requestQty:0,orderQty:0,status:"requested",requestedAt:td(),orderedAt:"",expectedDate:"",receivedAt:"",note:""});return s;});showToast("입고 요청 등록됨");}}>📬 입고 요청 등록</button>
+            </div><SectionTitle style={{marginTop:16}}>📬 입고 요청 이력</SectionTitle>
+            {reqs.length===0?<div style={{fontSize:11,color:C.muted}}>없음</div>:reqs.map(r=>(
+              <div key={r.id} style={{padding:"6px 0",borderBottom:`1px solid ${C.brd2}`,fontSize:11}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                  <span style={badge(statusColor[r.status]||"gray")}>{statusLabel[r.status]||r.status}</span>
+                  <span style={{color:C.muted,fontSize:10}}>{r.requestedAt}</span>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between"}}>
+                  <span style={{color:C.muted}}>요청: {fmtG(r.requestQty||0)}</span>
+                  <span style={{fontWeight:500}}>발주: {fmtG(r.orderQty||0)}</span>
+                </div>
+                {r.expectedDate&&<div style={{color:C.muted,fontSize:10}}>입고 예정: {r.expectedDate}</div>}
+                {(r.status==="ordered"||r.status==="confirmed")&&(
+                  <button style={{...btn("s"),marginTop:4,fontSize:10,padding:"2px 7px"}} onClick={()=>receive(r.id)}>✓ 입고완료</button>
+                )}
+              </div>
+            ))}
+
+            
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SectionTitle({children,style}) {
+  return <div style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:"uppercase",marginBottom:6,...style}}>{children}</div>;
+}
+function KV({k,v,c}) {
+  return <div style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:`1px solid ${C.brd2}`,fontSize:11}}><span style={{color:C.muted}}>{k}</span><span style={{fontWeight:500,color:c||C.txt}}>{v}</span></div>;
+}
+
+// ════════════════════════════════════════════════════════════
+// 3. 입고 관리 (3단계: 요청→발주→입고완료)
+// ════════════════════════════════════════════════════════════
+function IncomingPage({st,upd,matById,needs,showToast,showConfirm}) {
+  const [tab,setTab]=useState("req");
+
+  const TABS=[["req","📬 입고 요청"],["order","📦 발주 이력"],["hist","✅ 입고 완료 이력"]];
+
+  return (
+    <div style={css.main}>
+      <div style={css.mhd}><span style={{fontSize:14,fontWeight:600}}>입고 관리</span></div>
+      <div style={css.stabs}>
+        {TABS.map(([v,l])=><button key={v} style={stab(tab===v)} onClick={()=>setTab(v)}>{l}</button>)}
+      </div>
+      <div style={css.mb}>
+        {tab==="req"   && <InReqTab   st={st} upd={upd} matById={matById} needs={needs} showToast={showToast} showConfirm={showConfirm} />}
+        {tab==="order" && <InOrderTab st={st} upd={upd} matById={matById} needs={needs} showToast={showToast} showConfirm={showConfirm} />}
+        {tab==="hist"  && <InHistTab  st={st} upd={upd} matById={matById} showToast={showToast} showConfirmHist={(msg,fn)=>showConfirm(msg,fn)} />}
+      </div>
+    </div>
+  );
+}
+
+function InReqTab({st,upd,matById,needs,showToast,showConfirm}) {
+  const reqs = st.inReqs.filter(r=>r.status==="requested");
+  const doDelete=(id)=>showConfirm("이 입고 요청을 삭제할까요?",()=>{upd(s=>{s.inReqs=s.inReqs.filter(r=>r.id!==id);return s;});showToast("삭제됐습니다.");});
+  const doOrder=(id)=>{upd(s=>{const r=s.inReqs.find(x=>x.id===id);if(r){r.status="ordered";r.orderedAt=td();}return s;});showToast("발주 완료 처리됐습니다.");};
+  const doReceive=(id)=>{
+    const r=st.inReqs.find(x=>x.id===id); if(!r)return;
+    const m=matById(r.matId); if(!m)return;
+    upd(s=>{const rr=s.inReqs.find(x=>x.id===id);const mat=s.materials.find(x=>x.id===r.matId);if(rr){rr.status="received";rr.receivedAt=td();}if(mat)mat.stock+=(rr?.orderQty||rr?.requestQty||0);s.inHist.push({id:"H_"+uid(),matId:r.matId,qty:rr?.orderQty||rr?.requestQty||0,date:td(),note:"입고완료"});return s;});
+    showToast((m.name)+" 입고 완료.");
+  };
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+        <div style={{fontSize:11,color:C.muted}}>부족량 기준 입고 요청 목록입니다. 수량 입력 후 발주완료 처리하세요.</div>
+        <button style={btn()} onClick={()=>csvDownload(["원료명","업체","현재재고(g)","부족량(g)","요청수량(g)","상태"],
+          reqs.map(r=>{const m=matById(r.matId);const n=needs[r.matId]||0;const s=(m?.stock||0)+(m?.incoming||0)-n;return[m?.name||"",m?.vendor||"",m?.stock||0,Math.round(s),r.requestQty||0,r.status];}),
+          "입고요청_"+td()+".csv")}>⬇ 내보내기</button>
+      </div>
+      {reqs.length===0?<div style={{padding:30,textAlign:"center",color:C.muted}}>입고 요청 없음</div>:(
+        <div style={{overflowX:"auto"}}>
+          <table style={TBL}><tbody>
+            <tr><th style={TH}>원료명</th><th style={TH}>업체</th><th style={THR}>현재재고(g)</th><th style={THR}>계획소요(g)</th><th style={THR}>부족량(g)</th><th style={THR}>요청수량(g)</th><th style={TH}>요청일</th><th style={TH}>액션</th></tr>
+            {reqs.map(r=>{
+              const m=matById(r.matId); if(!m)return null;
+              const n=needs[r.matId]||0; const avail=m.stock+m.incoming; const short=avail-n;
+              return(
+                <tr key={r.id}>
+                  <td style={TD}><b>{m.name}</b></td>
+                  <td style={{...TD,color:C.muted,fontSize:10}}>{m.vendor}</td>
+                  <td style={TDR}>{fmt(m.stock)}</td>
+                  <td style={{...TDR,color:C.blue}}>{n>0?fmt(Math.round(n)):"-"}</td>
+                  <td style={{...TDR,color:short<0?C.red:"inherit",fontWeight:short<0?600:400}}>{fmt(Math.round(short))}</td>
+                  <td style={TDR}><input type="number" style={NI} value={r.requestQty||0} onChange={e=>upd(s=>{const x=s.inReqs.find(x=>x.id===r.id);if(x)x.requestQty=parseInt(e.target.value)||0;return s;})} /></td>
+                  <td style={{...TD,color:C.muted,fontSize:10}}>{r.requestedAt}</td>
+                  <td style={TD}>
+                    <div style={{display:"flex",gap:4}}>
+                      <button style={btn("s")} onClick={()=>doOrder(r.id)}>📦 발주요청</button>
+                      <button style={btn("d")} onClick={()=>doDelete(r.id)}>🗑 삭제</button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody></table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InOrderTab({st,upd,matById,needs,showToast,showConfirm}) {
+  const orders = st.inReqs.filter(r=>r.status==="ordered"||r.status==="confirmed");
+  const doReceive=(id)=>{
+    const r=st.inReqs.find(x=>x.id===id); if(!r)return;
+    upd(s=>{const rr=s.inReqs.find(x=>x.id===id);const mat=s.materials.find(x=>x.id===r.matId);const qty=rr?.orderQty||rr?.requestQty||0;if(rr){rr.status="received";rr.receivedAt=td();}if(mat)mat.stock+=qty;s.inHist.push({id:"H_"+uid(),matId:r.matId,qty,date:td(),note:"입고완료"});return s;});
+    showToast("입고 완료 처리됐습니다.");
+  };
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
+        <button style={btn()} onClick={()=>csvDownload(["원료명","업체","요청수량(g)","발주수량(g)","입고예정일","발주일","상태"],
+          orders.map(r=>{const m=matById(r.matId);return[m?.name||"",m?.vendor||"",r.requestQty||0,r.orderQty||0,r.expectedDate||"",r.orderedAt||"",r.status];}),
+          "발주이력_"+td()+".csv")}>⬇ 내보내기</button>
+      </div>
+      {orders.length===0?<div style={{padding:30,textAlign:"center",color:C.muted}}>발주 이력 없음</div>:(
+        <div style={{overflowX:"auto"}}>
+          <table style={TBL}><tbody>
+            <tr><th style={TH}>원료명</th><th style={TH}>업체</th><th style={THR}>부족량(g)</th><th style={THR}>발주수량(g)</th><th style={TH}>입고예정일</th><th style={TH}>발주일</th><th style={TH}>상태</th><th style={TH}>액션</th></tr>
+            {orders.map(r=>{const m=matById(r.matId);if(!m)return null;
+              const on=needs[m.id]||0;
+              const shortAmt=m.stock-on;
+              return(
+              <tr key={r.id}>
+                <td style={TD}><b>{m.name}</b></td>
+                <td style={{...TD,color:C.muted,fontSize:10}}>{m.vendor}</td>
+                <td style={{...TDR,color:shortAmt<0?C.red:"inherit",fontWeight:shortAmt<0?600:400}}>{shortAmt<0?fmt(Math.round(shortAmt)):<span style={{color:C.green,fontSize:10}}>충분</span>}</td>
+                <td style={TDR}><input type="number" style={NI} value={r.orderQty||0} onChange={e=>upd(s=>{const x=s.inReqs.find(x=>x.id===r.id);if(x)x.orderQty=parseInt(e.target.value)||0;return s;})} /></td>
+                <td style={TD}><input type="date" style={DI} value={r.expectedDate||""} onChange={e=>upd(s=>{const x=s.inReqs.find(x=>x.id===r.id);if(x)x.expectedDate=e.target.value;return s;})} /></td>
+                <td style={{...TD,color:C.muted,fontSize:10}}>{r.orderedAt||""}</td>
+                <td style={TD}><span style={badge(r.status==="confirmed"?"g":"y")}>{r.status==="confirmed"?"입고예정":"발주완료"}</span></td>
+                <td style={TD}>
+                  <div style={{display:"flex",gap:4}}>
+                    <button style={btn("s")} onClick={()=>doReceive(r.id)}>✓ 입고완료</button>
+                    <button style={btn("d")} onClick={()=>showConfirm("발주를 취소할까요? 입고 요청 상태로 되돌아갑니다.",()=>{upd(s=>{const x=s.inReqs.find(x=>x.id===r.id);if(x){x.status="requested";x.orderedAt="";}return s;});showToast("발주 취소됐습니다.");})}>취소</button>
+                  </div>
+                </td>
+              </tr>
+            );})}
+          </tbody></table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InHistTab({st,upd,matById,showToast,showConfirmHist}) {
+  const hist=[...st.inHist].sort((a,b)=>b.date.localeCompare(a.date));
+  return(
+    <div>
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
+        <button style={btn()} onClick={()=>csvDownload(["날짜","원료명","업체","입고량(g)","비고"],hist.map(h=>{const m=matById(h.matId);return[h.date,m?.name||"",m?.vendor||"",h.qty,h.note||""];}),
+          "입고완료이력_"+td()+".csv")}>⬇ 내보내기</button>
+      </div>
+      {hist.length===0?<div style={{padding:30,textAlign:"center",color:C.muted}}>이력 없음</div>:(
+        <table style={TBL}><tbody>
+          <tr><th style={TH}>날짜</th><th style={TH}>원료명</th><th style={TH}>업체</th><th style={THR}>입고량(g)</th><th style={TH}>비고</th><th style={TH}>액션</th></tr>
+          {hist.map(h=>{const m=matById(h.matId);return(<tr key={h.id}><td style={TD}>{h.date}</td><td style={TD}>{m?.name||""}</td><td style={{...TD,color:C.muted,fontSize:10}}>{m?.vendor||""}</td><td style={{...TDR,color:C.green,fontWeight:500}}>+{fmtG(h.qty)}</td><td style={{...TD,color:C.muted}}>{h.note||""}</td><td style={TD}><button style={btn("d")} onClick={()=>showConfirmHist("이 입고를 취소할까요? 재고에서 차감됩니다.",()=>{upd(s=>{const mat=s.materials.find(x=>x.id===h.matId);if(mat)mat.stock=Math.max(0,mat.stock-h.qty);s.inHist=s.inHist.filter(x=>x.id!==h.id);return s;});showToast("입고가 취소됐습니다.");})}>취소</button></td></tr>);})}
+        </tbody></table>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// 4. 생산계획
+// ════════════════════════════════════════════════════════════
+function ProductionPage({st,upd,matById,rcpById,needs,showToast,showConfirm,setPage}) {
+  const [tab,setTab]=useState("add");
+  const [mode,setMode]=useState("list"); // list|cal
+  const [editId,setEditId]=useState(null);
+  const [form,setForm]=useState({recipeId:"",qty:"",date:""});
+  const [viewMode,setViewMode]=useState("short"); // short|all — 부족원료만 or 전체 소요원료
+  const [altChoice,setAltChoice]=useState({}); // {matId: {useAlt:bool, selections:{altMatId: qtyG}}}
+
+  const activePlans=st.plans.filter(p=>p.status==="plan");
+
+  // 생산계획 추가 시 부족/전체 소요원료 계산
+  const previewNeeds = useMemo(()=>{
+    if(!form.recipeId||!form.qty) return {};
+    const plans=[...activePlans.map(p=>({recipeId:p.recipeId,qty:p.qty})),{recipeId:form.recipeId,qty:parseInt(form.qty)||0}];
+    return calcNeeds(plans,st.recipes);
+  },[form.recipeId,form.qty,st.plans,st.recipes]);
+
+  const previewRows = useMemo(()=>{
+    if(!form.recipeId||!form.qty) return [];
+    const rcp=st.recipes.find(r=>r.id===form.recipeId);
+    if(!rcp) return [];
+    return rcp.ings
+      .filter(ing=>ing.matId)
+      .map(ing=>{
+        const m=matById(ing.matId);
+        if(!m||m.isWater||m.isInno) return null;
+        const need=previewNeeds[ing.matId]||0;
+        const avail=m.stock+m.incoming;
+        const short=avail-need;
+        return {m,need,avail,short,pct:ing.pct};
+      })
+      .filter(Boolean)
+      .sort((a,b)=>a.short-b.short);
+  },[form.recipeId,form.qty,previewNeeds,st.materials]);
+
+  const shorts = previewRows.filter(r=>r.short<0);
+  const display = viewMode==="short" ? shorts : previewRows;
+
+  const addPlan=()=>{
+    if(!form.recipeId){showToast("레시피를 선택하세요.");return;}
+    const qty=parseInt(form.qty)||0;
+    if(!qty){showToast("생산량을 입력하세요.");return;}
+    upd(s=>{s.plans.push({id:"PLN_"+uid(),recipeId:form.recipeId,qty,plannedDate:form.date,status:"plan",createdAt:td(),completedAt:null,actualQty:null});return s;});
+    setForm({...form,recipeId:"",qty:"",date:""}); setTab("hist"); showToast("생산계획이 추가됐습니다.");
+  };
+
+  const applyDeduct=(p,s)=>{const rcp=s.recipes.find(r=>r.id===p.recipeId);if(!rcp)return;const qty=p.actualQty||p.qty;rcp.ings.forEach(ing=>{if(!ing.matId)return;const m=s.materials.find(x=>x.id===ing.matId);if(!m||m.isWater||m.isInno)return;m.stock=Math.max(0,m.stock-qty*ing.pct/100);});};
+  const revertDeduct=(p,s)=>{const rcp=s.recipes.find(r=>r.id===p.recipeId);if(!rcp)return;const qty=p.actualQty||p.qty;rcp.ings.forEach(ing=>{if(!ing.matId)return;const m=s.materials.find(x=>x.id===ing.matId);if(!m||m.isWater||m.isInno)return;m.stock+=qty*ing.pct/100;});};
+
+  const plans=[...st.plans].sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+  const [editForm,setEditForm]=useState({});
+
+  return(
+    <div style={css.main}>
+      <div style={css.mhd}><span style={{fontSize:14,fontWeight:600}}>생산계획 관리</span></div>
+      <div style={css.stabs}>
+        <button style={stab(tab==="add")}  onClick={()=>setTab("add")}>생산계획 추가</button>
+        <button style={stab(tab==="hist")} onClick={()=>setTab("hist")}>이력 관리</button>
+        <button style={stab(tab==="cal")}  onClick={()=>setTab("cal")}>생산 달력</button>
+      </div>
+      <div style={css.mb}>
+        {tab==="add" && (
+          <div>
+            <div style={FBOX}>
+              <div style={FROW}><span style={FLBL}>레시피</span>
+                <select style={INP} value={form.recipeId} onChange={e=>setForm({...form,recipeId:e.target.value})}>
+                  <option value="">-- 선택 --</option>
+                  {st.recipes.map(r=><option key={r.id} value={r.id}>{r.name}{r.code?" ("+r.code+")":""}</option>)}
+                </select>
+              </div>
+              <div style={FROW}><span style={FLBL}>생산량</span>
+                <input type="text" style={{...INP,maxWidth:160}} placeholder="예: 200,000" value={form.qty?parseInt(form.qty).toLocaleString():""}
+                  onChange={e=>setForm({...form,qty:e.target.value.replace(/,/g,"")})} />
+                <span style={{fontSize:11,color:C.muted,flexShrink:0}}>g</span>
+              </div>
+              <div style={FROW}><span style={FLBL}>예정일</span><input type="date" style={{...INP,maxWidth:180}} value={form.date} onChange={e=>setForm({...form,date:e.target.value})} /></div>
+              <button style={btn("p")} onClick={addPlan}>✅ 생산계획 반영</button>
+            </div>
+
+            {form.recipeId&&form.qty&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div style={{display:"flex",gap:5}}>
+                    <button style={{...btn(viewMode==="short"?"p":undefined),padding:"3px 8px"}} onClick={()=>setViewMode("short")}>부족 원료만 ({shorts.length}종)</button>
+                    <button style={{...btn(viewMode==="all"?"p":undefined),padding:"3px 8px"}} onClick={()=>setViewMode("all")}>전체 소요 원료 ({previewRows.length}종)</button>
+                  </div>
+                  <div style={{display:"flex",gap:5}}>
+                    <button style={btn()} onClick={()=>csvDownload(["원료명","업체","가용재고(g)","필요량(g)","부족량(g)"],display.map(r=>[r.m.name,r.m.vendor,Math.round(r.avail),Math.round(r.need),Math.round(r.short)]),"소요원료_"+td()+".csv")}>⬇ 내보내기</button>
+                    {shorts.length>0&&<button style={btn("p")} onClick={()=>{
+                    let cnt=0;
+                    shorts.forEach(({m,short})=>{
+                      const choices=altChoice[m.id];
+                      const totalAlt=choices?Object.values(choices).reduce((s,v)=>s+v,0):0;
+                      const remain=Math.abs(Math.round(short))-totalAlt;
+                      // 원본 원료 요청 (대체로 충당 못한 나머지)
+                      if(remain>0){upd(s=>{s.inReqs.push({id:"REQ_"+uid(),matId:m.id,requestQty:remain,orderQty:0,status:"requested",requestedAt:td(),orderedAt:"",expectedDate:"",receivedAt:"",note:"생산계획"});return s;});cnt++;}
+                      // 대체 원료 요청
+                      if(choices){Object.entries(choices).forEach(([altId,qty])=>{if(qty>0){upd(s=>{s.inReqs.push({id:"REQ_"+uid(),matId:altId,requestQty:qty,orderQty:0,status:"requested",requestedAt:td(),orderedAt:"",expectedDate:"",receivedAt:"",note:"대체원료("+m.name+")"});return s;});cnt++;}});}
+                    });
+                    showToast(cnt+"건 입고 요청이 등록됐습니다.");setPage("incoming");
+                  }}>📬 부족원료 입고요청</button>}
+                  </div>
+                </div>
+                <div style={{overflowX:"auto"}}>
+                  <table style={TBL}><tbody>
+                    <tr><th style={TH}>원료명</th><th style={TH}>업체</th><th style={THR}>가용재고(g)</th><th style={THR}>필요량(g)</th><th style={THR}>부족량(g)</th><th style={TH}>대체원료</th></tr>
+                    {display.length===0?<tr><td colSpan={5} style={{...TD,textAlign:"center",color:C.green}}>✓ {viewMode==="short"?"부족 원료 없음":"소요 원료 없음"}</td></tr>:display.map(({m,need,avail,short})=>{
+                      const grp=st.matGroups?st.matGroups.find(g=>g.matIds.includes(m.id)&&g.matIds.length>1):null;
+                      const alts=grp?grp.matIds.filter(id=>id!==m.id).map(id=>st.materials.find(x=>x.id===id)).filter(Boolean):[];
+                      const altStock=alts.reduce((s,a)=>s+a.stock,0);
+                      return(<tr key={m.id}>
+                        <td style={TD}>
+                          <div>{m.name}</div>
+                          {alts.length>0&&short<0&&(
+                            <div style={{marginTop:4,padding:"4px 6px",background:"#f0f7ff",borderRadius:4,fontSize:10}}>
+                              <div style={{color:C.blue,fontWeight:500,marginBottom:3}}>🔀 대체원료 선택</div>
+                              {alts.map(a=>React.createElement("label",{key:a.id,style:{display:"flex",alignItems:"center",gap:4,marginBottom:3,cursor:"pointer"}},
+                                React.createElement("input",{type:"checkbox",
+                                  checked:!!(altChoice[m.id]&&altChoice[m.id][a.id]!==undefined),
+                                  onChange:e=>{
+                                    const cur=altChoice[m.id]||{};
+                                    if(e.target.checked){setAltChoice({...altChoice,[m.id]:{...cur,[a.id]:Math.abs(Math.round(short))}});}
+                                    else{const n={...cur};delete n[a.id];setAltChoice({...altChoice,[m.id]:n});}
+                                  }
+                                }),
+                                React.createElement("span",{style:{flex:1}},a.name),
+                                React.createElement("span",{style:{color:C.muted,marginRight:4}},fmt(a.stock)+"g 보유"),
+                                altChoice[m.id]&&altChoice[m.id][a.id]!==undefined&&React.createElement("input",{
+                                  type:"number",style:{width:70,padding:"1px 4px",border:"1px solid #ccc",borderRadius:3,fontSize:10,textAlign:"right"},
+                                  value:altChoice[m.id][a.id],
+                                  onChange:e=>{const cur=altChoice[m.id]||{};setAltChoice({...altChoice,[m.id]:{...cur,[a.id]:parseInt(e.target.value)||0}});}
+                                }),
+                                altChoice[m.id]&&altChoice[m.id][a.id]!==undefined&&React.createElement("span",{style:{fontSize:9,color:C.muted}},"g")
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{...TD,color:C.muted,fontSize:10}}>{m.vendor}</td>
+                        <td style={TDR}>{fmt(Math.round(avail))}</td>
+                        <td style={TDR}>{fmt(Math.round(need))}</td>
+                        <td style={{...TDR,color:short<0?C.red:C.green,fontWeight:600}}>{short<0?fmt(Math.round(short)):"충분"}</td>
+                        <td style={TD}>{alts.length>0&&<span style={badge(short<0&&altStock>0?"b":"gray")}>{alts.length}종</span>}</td>
+                      </tr>);})}
+                  </tbody></table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab==="hist"&&(
+          <div>
+            <div style={{display:"flex",gap:6,marginBottom:10,justifyContent:"space-between",alignItems:"center"}}>
+              <button style={btn()} onClick={()=>csvDownload(["제품명","코드","예정일","계획량(g)","실제생산량(g)","완료일","상태"],
+                plans.map(p=>{const r=rcpById(p.recipeId);return[r?.name||"",r?.code||"",p.plannedDate||"",p.qty,p.actualQty||"",p.completedAt||"",p.status];}),
+                "생산이력_"+td()+".csv")}>⬇ 내보내기</button>
+            </div>
+
+            {mode==="list"&&(plans.length===0?<div style={{padding:30,textAlign:"center",color:C.muted}}>생산계획 없음</div>:(
+              <div style={{overflowX:"auto"}}>
+                <table style={TBL}><tbody>
+                  <tr><th style={TH}>제품명</th><th style={TH}>예정일</th><th style={THR}>계획량(g)</th><th style={THR}>실제생산(g)</th><th style={TH}>완료일</th><th style={TH}>상태</th><th style={TH}>액션</th></tr>
+                  {plans.map(p=>{
+                    const r=rcpById(p.recipeId);
+                    let sBdg; if(p.status==="done") sBdg=<span style={badge("g")}>완료</span>; else if(p.status==="cancel") sBdg=<span style={badge("gray")}>취소</span>; else sBdg=<span style={badge("b")}>계획</span>;
+                    const isEdit=editId===p.id;
+                    return(
+                      <tr key={p.id} style={{background:isEdit?"#f0f7ff":""}}>
+                        <td style={TD}>{r?.name||"?"}</td>
+                        <td style={TD}>{isEdit?<input type="date" style={DI} value={editForm.plannedDate||""} onChange={e=>setEditForm({...editForm,plannedDate:e.target.value})} />:(p.plannedDate||"-")}</td>
+                        <td style={TDR}>{isEdit?<input type="number" style={NI} value={editForm.qty||0} onChange={e=>setEditForm({...editForm,qty:parseInt(e.target.value)||0})} />:fmtG(p.qty)}</td>
+                        <td style={TDR}>{isEdit?<input type="number" style={NI} value={editForm.actualQty||p.qty} onChange={e=>setEditForm({...editForm,actualQty:parseInt(e.target.value)||0})} />:(p.actualQty?fmtG(p.actualQty):"-")}</td>
+                        <td style={TD}><input type="date" style={DI} value={p.completedAt||""} onChange={e=>upd(s=>{const x=s.plans.find(x=>x.id===p.id);if(x)x.completedAt=e.target.value;return s;})} /></td>
+                        <td style={TD}>{sBdg}</td>
+                        <td style={TD}>
+                          <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>
+                            {isEdit?<>
+                              <button style={btn("s")} onClick={()=>{upd(s=>{const x=s.plans.find(x=>x.id===p.id);if(x)Object.assign(x,editForm);return s;});setEditId(null);showToast("수정됐습니다.");}}>저장</button>
+                              <button style={btn()} onClick={()=>setEditId(null)}>취소</button>
+                            </>:<>
+                              <button style={btn()} onClick={()=>{setEditId(p.id);setEditForm({plannedDate:p.plannedDate||"",qty:p.qty,actualQty:p.actualQty||p.qty,completedAt:p.completedAt||td()});}}>수정</button>
+                              {p.status==="plan"&&<>
+                                <button style={btn("s")} onClick={()=>{const qty=editForm.actualQty||p.qty;upd(s=>{const x=s.plans.find(x=>x.id===p.id);if(x){x.status="done";x.actualQty=qty;x.completedAt=td();applyDeduct(x,s);}return s;});showToast("생산 완료 처리됐습니다.");}}>완료</button>
+                              <button style={btn("y")} onClick={()=>showConfirm("재고 차감 없이 완료 처리합니다. (재고실사로 이미 반영된 경우 사용)",()=>{const qty=editForm.actualQty||p.qty;upd(s=>{const x=s.plans.find(x=>x.id===p.id);if(x){x.status="done";x.actualQty=qty;x.completedAt=x.completedAt||td();}return s;});showToast("차감 없이 완료 처리됐습니다.");})}>미차감 완료</button>
+                                <button style={btn()} onClick={()=>showConfirm("생산을 취소할까요?",()=>{upd(s=>{const x=s.plans.find(x=>x.id===p.id);if(x)x.status="cancel";return s;});showToast("취소됐습니다.");})}>취소</button>
+                              </>}
+                              <button style={btn("d")} onClick={()=>showConfirm(p.status==="done"?"삭제 시 재고가 복귀됩니다. 계속할까요?":"이 생산계획을 삭제할까요?",()=>{upd(s=>{if(p.status==="done")revertDeduct(p,s);s.plans=s.plans.filter(x=>x.id!==p.id);return s;});setEditId(null);showToast("삭제됐습니다.");})}>🗑{p.status==="done"?" (복귀)":""}</button>
+                            </>}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody></table>
+              </div>
+            ))}
+
+          </div>
+        )}
+        {tab==="cal"&&(
+          <div>
+            <CalView plans={plans} rcpById={rcpById} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CalView({plans,rcpById}) {
+  const now=new Date(); const Y=now.getFullYear(),M=now.getMonth();
+  const first=new Date(Y,M,1).getDay(); const last=new Date(Y,M+1,0).getDate();
+  const byDay={};
+  plans.forEach(p=>{
+    const ds=p.plannedDate||p.completedAt; if(!ds)return;
+    const dm=ds.slice(0,7),dd=parseInt(ds.slice(8));
+    if(dm===Y+"-"+String(M+1).padStart(2,"0")){if(!byDay[dd])byDay[dd]=[];byDay[dd].push(p);}
+  });
+  const cells=[];
+  for(let i=0;i<first;i++)cells.push(React.createElement("div",{key:"e"+i}));
+  for(let d=1;d<=last;d++){
+    const evs=byDay[d]||[]; const isT=d===now.getDate();
+    cells.push(
+      React.createElement("div",{key:d,style:{background:C.card,border:"1px solid "+(isT?C.blue:C.brd),borderRadius:4,padding:"3px 4px",minHeight:90,fontSize:9,overflow:"hidden"}},
+        React.createElement("div",{style:{color:isT?C.blue:C.muted,fontWeight:isT?600:400,marginBottom:2,fontSize:10}},d),
+        evs.map(p=>{
+          const r=rcpById(p.recipeId);
+          const kg=(p.qty/1000).toFixed(1);
+          const bg=p.status==="done"?C.gbg:(p.status==="cancel"?"#f5f4f0":C.bbg);
+          const cl=p.status==="done"?C.green:(p.status==="cancel"?"#999":C.blue);
+          return React.createElement("div",{key:p.id,style:{background:bg,color:cl,borderRadius:3,padding:"2px 4px",marginBottom:2,lineHeight:1.4}},
+            React.createElement("div",{style:{fontWeight:500,wordBreak:"break-all",whiteSpace:"normal",fontSize:9}},r?r.name:"?"),
+            React.createElement("div",{style:{fontSize:9,opacity:0.85}},kg+"kg")
+          );
+        })
+      )
+    );
+  }
+  return React.createElement("div",null,
+    React.createElement("div",{style:{fontWeight:600,marginBottom:8}},Y+"년 "+(M+1)+"월"),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}},
+      ["일","월","화","수","목","금","토"].map(d=>React.createElement("div",{key:d,style:{textAlign:"center",fontSize:10,color:C.muted,padding:3}},d)),
+      ...cells
+    )
+  );
+}
+// ════════════════════════════════════════════════════════════
+// 재고 실사
+// ════════════════════════════════════════════════════════════
+function StocktakePage({st,upd,matById,onBack,showToast}) {
+  const [vals,setVals]=useState({});
+  const [q,setQ]=useState("");
+  const [pasteMode,setPasteMode]=useState(false);
+  const [pasteText,setPasteText]=useState("");
+
+  const INNO_RATIO={"MAT005":0.15,"MAT006":0.15,"MAT007":0.20,"MAT008":0.50};
+  const INNO_ID="MAT004";
+
+  const shown=st.materials.filter(m=>!m.isWater&&(!q||m.name.toLowerCase().includes(q.toLowerCase())||m.newCode.includes(q)));
+
+  const doConfirm=()=>{
+    upd(s=>{
+      Object.entries(vals).forEach(([id,v])=>{
+        if(v==="")return;
+        const qty=parseInt(v)||0;
+        if(id===INNO_ID){
+          Object.entries(INNO_RATIO).forEach(([cid,ratio])=>{
+            const c=s.materials.find(x=>x.id===cid);
+            if(c){c.stock=Math.round(qty*ratio);c.lastStocktake=td();}
+          });
+          const inno=s.materials.find(x=>x.id===INNO_ID);
+          if(inno){inno.stock=qty;inno.lastStocktake=td();}
+        } else {
+          const m=s.materials.find(x=>x.id===id);
+          if(m){m.stock=qty;m.lastStocktake=td();}
+        }
+      });
+      return s;
+    });
+    onBack();showToast("재고 실사 완료됐습니다.");
+  };
+
+  const downloadForm=()=>{
+    const rows=[["원료명","업체","신규코드","현재재고(g)","실측값(g)","비고"].join("\t"),
+      ...shown.map(m=>[m.name,m.vendor,m.newCode||"",m.stock,"",""].join("\t"))];
+    csvDownload(["원료명","업체","신규코드","현재재고(g)","실측값(g)","비고"],
+      shown.map(m=>[m.name,m.vendor,m.newCode||"",m.stock,"",""]),
+      "재고실사양식_"+td()+".csv");
+  };
+
+  const parsePaste=()=>{
+    const lines=pasteText.trim().split("\n");
+    const nv={...vals};let cnt=0;
+    lines.forEach(line=>{
+      const cols=line.split("\t");
+      const name=(cols[0]||"").trim();
+      const val=(cols[4]||"").trim();
+      if(!name||!val||isNaN(parseInt(val)))return;
+      const m=st.materials.find(x=>x.name===name);
+      if(m){nv[m.id]=val;cnt++;}
+    });
+    setVals(nv);setPasteMode(false);setPasteText("");
+    showToast(cnt+"개 원료 데이터가 입력됐습니다.");
+  };
+
+  return (
+    <div style={css.main}>
+      <div style={css.mhd}>
+        <span style={{fontSize:14,fontWeight:600}}>재고 실사</span>
+        <div style={{display:"flex",gap:6}}>
+          <button style={btn()} onClick={downloadForm}>⬇ 양식 다운로드</button>
+          <button style={btn()} onClick={()=>setPasteMode(!pasteMode)}>📤 붙여넣기 업로드</button>
+          <button style={btn("p")} onClick={doConfirm}>✅ 실사 확정</button>
+          <button style={btn()} onClick={onBack}>취소</button>
+        </div>
+      </div>
+      <div style={css.mb}>
+        {pasteMode&&(
+          <div style={{...FBOX,borderColor:C.blue,marginBottom:12}}>
+            <div style={{fontSize:12,fontWeight:600,color:C.blue,marginBottom:6}}>Excel 데이터 붙여넣기</div>
+            <div style={{fontSize:11,color:C.muted,marginBottom:6}}>양식 작성 후 전체 선택→복사→아래 붙여넣기</div>
+            <textarea style={{width:"100%",height:100,fontFamily:"monospace",fontSize:11,border:"1px solid #ccc",borderRadius:5,padding:6,resize:"vertical"}}
+              placeholder="여기에 Excel 내용 붙여넣기..." value={pasteText} onChange={e=>setPasteText(e.target.value)} />
+            <div style={{display:"flex",gap:6,marginTop:6}}>
+              <button style={btn("s")} onClick={parsePaste}>✓ 적용</button>
+              <button style={btn()} onClick={()=>{setPasteMode(false);setPasteText("");}}>취소</button>
+            </div>
+          </div>
+        )}
+        <div style={{background:C.bbg,padding:"7px 12px",borderRadius:6,fontSize:11,color:C.blue,marginBottom:10}}>
+          수정이 필요한 원료만 입력하세요. 빈칸은 현재 재고 유지. 이노셉 입력 시 자동으로 하위원료에 분배됩니다.
+        </div>
+        <input style={{...SR,width:240,marginBottom:10}} placeholder="원료명·코드" value={q} onChange={e=>setQ(e.target.value)} />
+        <div style={{overflowX:"auto"}}>
+          <table style={TBL}><tbody>
+            <tr><th style={TH}>원료명</th><th style={TH}>업체</th><th style={TH}>신규코드</th><th style={THR}>현재재고(g)</th><th style={THR}>실측값(g)</th></tr>
+            {shown.map(m=>(
+              <tr key={m.id} style={{background:vals[m.id]!==undefined&&vals[m.id]!==""?"#eff4ff":""}}>
+                <td style={TD}>{m.name}{m.isInno&&<span style={{...badge("b"),marginLeft:4,fontSize:9}}>이노셉</span>}</td>
+                <td style={{...TD,color:C.muted,fontSize:10}}>{m.vendor}</td>
+                <td style={{...TD,color:C.blue,fontSize:10}}>{m.newCode||"-"}</td>
+                <td style={TDR}>{fmt(m.stock)}</td>
+                <td style={TDR}><input type="number" style={NI} placeholder="미입력시 유지" value={vals[m.id]??""} onChange={e=>setVals({...vals,[m.id]:e.target.value})} /></td>
+              </tr>
+            ))}
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GroupPage({st,upd,matById,showToast,showConfirm}) {
+  const [sel,setSel]=useState(null);
+  const [mode,setMode]=useState("view");
+  const [form,setForm]=useState({name:""});
+  const [srchQ,setSrchQ]=useState("");
+
+  const sg=sel?st.matGroups.find(g=>g.id===sel):null;
+
+  const addGroup=()=>{
+    if(!form.name.trim()){showToast("그룹명을 입력하세요.");return;}
+    const g={id:"GRP_"+uid(),name:form.name.trim(),matIds:[]};
+    upd(s=>{s.matGroups.push(g);return s;});
+    setSel(g.id);setMode("view");setForm({name:""});showToast("그룹이 추가됐습니다.");
+  };
+
+  const delGroup=()=>showConfirm("이 그룹을 삭제할까요?",()=>{
+    upd(s=>{s.matGroups=s.matGroups.filter(g=>g.id!==sel);return s;});
+    setSel(null);showToast("삭제됐습니다.");
+  });
+
+  const addMat=(matId)=>upd(s=>{const g=s.matGroups.find(x=>x.id===sel);if(g&&!g.matIds.includes(matId))g.matIds.push(matId);return s;});
+  const removeMat=(matId)=>upd(s=>{const g=s.matGroups.find(x=>x.id===sel);if(g)g.matIds=g.matIds.filter(x=>x!==matId);return s;});
+
+  const matHits=srchQ?st.materials.filter(m=>!m.isWater&&!m.isInno&&(m.name.toLowerCase().includes(srchQ.toLowerCase())||m.newCode.includes(srchQ))).slice(0,8):[];
+
+  const autoCreate=()=>{
+    const AUTOS=[
+      {name:"나이아신아마이드",kw:["나이아신아마이드","niacinamide"]},
+      {name:"EDTA-2Na",kw:["edta-2na","edta"]},
+      {name:"글리세린",kw:["glycerine","glycerin","eloglyn"]},
+      {name:"부틸렌글라이콜",kw:["부틸렌글라이콜"]},
+      {name:"히아루론산",kw:["히아루론산","hyaluronic"]},
+      {name:"잔탄검",kw:["잔탄검","xanthan"]},
+      {name:"콜라겐",kw:["collagen","콜라겐"]},
+    ];
+    let added=0;
+    upd(s=>{
+      AUTOS.forEach(ag=>{
+        if(s.matGroups.find(g=>g.name===ag.name))return;
+        const hits=s.materials.filter(m=>!m.isWater&&!m.isInno&&ag.kw.some(k=>m.name.toLowerCase().includes(k)));
+        if(hits.length>=2){s.matGroups.push({id:"GRP_"+uid(),name:ag.name,matIds:hits.map(x=>x.id)});added++;}
+      });
+      return s;
+    });
+    showToast(added>0?added+"개 그룹 자동 생성됐습니다.":"새 그룹 없음");
+  };
+
+  return (
+    <div style={css.body}>
+      <div style={css.sb}>
+        <div style={css.sbhd}>
+          <span style={{fontSize:11,fontWeight:600,color:C.muted}}>그룹 ({st.matGroups.length})</span>
+          <button style={btn("p")} onClick={()=>{setSel(null);setMode("add");setForm({name:""});}}>＋추가</button>
+        </div>
+        <div style={{padding:"5px 8px"}}>
+          <button style={{...btn(),width:"100%",justifyContent:"center",fontSize:11}} onClick={autoCreate}>✨ 자동 생성</button>
+        </div>
+        <div style={css.sbl}>
+          {st.matGroups.map(g=>(
+            <div key={g.id} style={sbrow(sel===g.id)} onClick={()=>{setSel(g.id);setMode("view");}}>
+              <div style={{fontSize:12,fontWeight:500,color:sel===g.id?C.blue:C.txt}}>{g.name}</div>
+              <div style={{fontSize:10,color:C.muted}}>원료 {g.matIds.length}개</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={css.main}>
+        {mode==="add"&&(
+          <>
+            <div style={css.mhd}>
+              <span style={{fontSize:14,fontWeight:600}}>그룹 추가</span>
+              <div style={{display:"flex",gap:6}}><button style={btn("s")} onClick={addGroup}>💾 저장</button><button style={btn()} onClick={()=>setMode("view")}>취소</button></div>
+            </div>
+            <div style={css.mb}>
+              <div style={FBOX}>
+                <div style={FROW}><span style={FLBL}>그룹명</span><input style={INP} value={form.name} onChange={e=>setForm({name:e.target.value})} placeholder="예: 나이아신아마이드" /></div>
+              </div>
+            </div>
+          </>
+        )}
+        {mode==="view"&&sg&&(
+          <>
+            <div style={css.mhd}>
+              <div><div style={{fontSize:14,fontWeight:600}}>{sg.name}</div><div style={{fontSize:11,color:C.muted}}>대체 가능 원료 {sg.matIds.length}개</div></div>
+              <button style={btn("d")} onClick={delGroup}>🗑 삭제</button>
+            </div>
+            <div style={css.mb}>
+              <div style={{background:C.bbg,padding:"7px 12px",borderRadius:6,fontSize:11,color:C.blue,marginBottom:10}}>
+                생산계획 부족원료 화면에서 대체원료 재고를 함께 확인할 수 있습니다.
+              </div>
+              <table style={TBL}><tbody>
+                <tr><th style={TH}>원료명</th><th style={TH}>업체</th><th style={TH}>신규코드</th><th style={THR}>현재재고(g)</th><th style={TH}></th></tr>
+                {sg.matIds.map(id=>{const m=matById(id);if(!m)return null;return(
+                  <tr key={id}><td style={TD}><b>{m.name}</b></td><td style={{...TD,color:C.muted,fontSize:10}}>{m.vendor}</td><td style={{...TD,color:C.blue,fontSize:10}}>{m.newCode||"-"}</td><td style={TDR}>{fmt(m.stock)}</td>
+                  <td style={TD}><button style={btn("d")} onClick={()=>removeMat(id)}>✕</button></td></tr>
+                );})}
+              </tbody></table>
+              <div style={{marginTop:10,position:"relative"}}>
+                <input style={{...SR,width:280}} placeholder="원료 검색하여 추가..." value={srchQ} onChange={e=>setSrchQ(e.target.value)} />
+                {matHits.length>0&&(
+                  <div style={{position:"absolute",top:"100%",left:0,width:340,border:"1px solid #ccc",borderRadius:5,background:"#fff",zIndex:20,maxHeight:180,overflowY:"auto",boxShadow:"0 4px 12px rgba(0,0,0,.1)"}}>
+                    {matHits.map(m=>(
+                      <div key={m.id} style={{padding:"5px 9px",cursor:"pointer",borderBottom:`1px solid ${C.brd2}`,fontSize:11,display:"flex",justifyContent:"space-between"}}
+                        onMouseOver={e=>e.currentTarget.style.background="#f5f5f5"} onMouseOut={e=>e.currentTarget.style.background=""}
+                        onClick={()=>{addMat(m.id);setSrchQ("");}}>
+                        <span><b>{m.name}</b><span style={{color:C.muted,marginLeft:6,fontSize:10}}>{m.vendor}</span></span>
+                        <span style={{color:C.blue,fontSize:10}}>{fmt(m.stock)}g</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+        {!sg&&mode!=="add"&&(
+          <div style={{padding:40,textAlign:"center",color:C.muted}}>
+            <div style={{fontSize:28,marginBottom:10}}>🔀</div>
+            <div style={{fontSize:13,fontWeight:600,color:C.txt,marginBottom:8}}>대체원료 그룹 관리</div>
+            <div style={{fontSize:11,lineHeight:1.8,maxWidth:380,margin:"0 auto"}}>
+              나이아신아마이드, EDTA-2Na처럼 같은 용도의 여러 업체 제품을 그룹으로 묶으면 생산계획에서 대체 재고를 함께 확인할 수 있습니다.
+            </div>
+            <button style={{...btn("p"),marginTop:14}} onClick={autoCreate}>✨ 자동 그룹 생성</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// 백업 / 복원 다이얼로그
+// ════════════════════════════════════════════════════════════
+function BackupDlg({st,setSt,onClose,showToast}) {
+  const [mode,setMode]=useState("menu"); // menu|export|import
+  const [importText,setImportText]=useState("");
+  const [importErr,setImportErr]=useState("");
+
+  const LS = "nutriadv_v4";
+
+  const doExport=()=>{
+    const data=JSON.stringify(st,null,2);
+    // 모달에 텍스트 표시 + 클립보드
+    navigator.clipboard.writeText(data).then(()=>showToast("클립보드에 복사됐습니다.")).catch(()=>{});
+    setMode("export");
+  };
+
+  const doImport=()=>{
+    try {
+      const parsed=JSON.parse(importText.trim());
+      if(!parsed.materials||!parsed.recipes){
+        setImportErr("올바른 백업 데이터가 아닙니다.");
+        return;
+      }
+      // matGroups 없으면 빈 배열 추가
+      if(!parsed.matGroups) parsed.matGroups=[];
+      localStorage.setItem(LS,JSON.stringify(parsed));
+      setSt(parsed);
+      showToast("데이터가 복원됐습니다.");
+      onClose();
+    } catch(e) {
+      setImportErr("JSON 파싱 오류: "+e.message);
+    }
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:"#fff",borderRadius:10,padding:"20px 22px",width:480,maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 8px 24px rgba(0,0,0,.18)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <b style={{fontSize:14}}>💾 데이터 백업 / 복원</b>
+          <button style={{border:"none",background:"#eee",borderRadius:4,padding:"3px 9px",cursor:"pointer",fontSize:12}} onClick={onClose}>✕ 닫기</button>
+        </div>
+
+        {mode==="menu"&&(
+          <div>
+            <div style={{background:"#e8f0fe",border:"1px solid #c5d8f5",borderRadius:6,padding:"10px 12px",fontSize:11,color:"#1a56db",marginBottom:14,lineHeight:1.6}}>
+              💡 데이터는 이 브라우저의 localStorage에 저장됩니다.<br/>
+              같은 브라우저라면 새로 배포해도 데이터가 유지됩니다.<br/>
+              다른 기기나 브라우저로 옮기려면 아래 백업/복원을 사용하세요.
+            </div>
+            <div style={{display:"flex",gap:8,flexDirection:"column"}}>
+              <button style={{...btn("p"),justifyContent:"flex-start",padding:"10px 14px",fontSize:12}} onClick={doExport}>
+                📤 현재 데이터 백업 (클립보드 복사)
+                <span style={{marginLeft:"auto",fontSize:10,opacity:.7}}>원료·레시피·입고·생산계획 전체</span>
+              </button>
+              <button style={{...btn("s"),justifyContent:"flex-start",padding:"10px 14px",fontSize:12}} onClick={()=>setMode("import")}>
+                📥 백업 데이터 복원 (붙여넣기)
+                <span style={{marginLeft:"auto",fontSize:10,opacity:.7}}>이전 백업으로 전체 복원</span>
+              </button>
+            </div>
+            <div style={{marginTop:12,fontSize:10,color:"#999",lineHeight:1.5}}>
+              현재 데이터: 원료 {st.materials.length}종 · 레시피 {st.recipes.length}개 · 입고요청 {st.inReqs.length}건 · 생산계획 {st.plans.length}건
+            </div>
+          </div>
+        )}
+
+        {mode==="export"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:8,flex:1,minHeight:0}}>
+            <div style={{fontSize:11,color:"#666"}}>아래 내용이 클립보드에 복사됐습니다. 텍스트 파일에 붙여넣어 저장해두세요.</div>
+            <textarea readOnly style={{flex:1,minHeight:200,fontFamily:"monospace",fontSize:10,border:"1px solid #ccc",borderRadius:5,padding:8,resize:"none"}}
+              value={JSON.stringify(st,null,2)} />
+            <div style={{display:"flex",gap:6}}>
+              <button style={btn("p")} onClick={()=>{navigator.clipboard.writeText(JSON.stringify(st,null,2)).then(()=>showToast("복사됐습니다.")).catch(()=>{});}}>📋 다시 복사</button>
+              <button style={btn()} onClick={()=>setMode("menu")}>← 뒤로</button>
+            </div>
+          </div>
+        )}
+
+        {mode==="import"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:8,flex:1,minHeight:0}}>
+            <div style={{fontSize:11,color:"#c62828",background:"#fdecea",border:"1px solid #f5b7b7",borderRadius:5,padding:"7px 10px"}}>
+              ⚠ 복원하면 현재 데이터가 덮어씌워집니다. 필요하면 먼저 백업하세요.
+            </div>
+            <div style={{fontSize:11,color:"#666"}}>백업해둔 텍스트를 아래에 붙여넣기 하세요.</div>
+            <textarea style={{flex:1,minHeight:200,fontFamily:"monospace",fontSize:10,border:"1px solid #ccc",borderRadius:5,padding:8,resize:"none"}}
+              placeholder="백업 데이터 붙여넣기..." value={importText} onChange={e=>{setImportText(e.target.value);setImportErr("");}} />
+            {importErr&&<div style={{fontSize:11,color:"#c62828"}}>{importErr}</div>}
+            <div style={{display:"flex",gap:6}}>
+              <button style={btn("s")} onClick={doImport}>✅ 복원 실행</button>
+              <button style={btn()} onClick={()=>setMode("menu")}>← 뒤로</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+function VendorPage({st,matById,setPage}) {
+  const [q,setQ]=useState(""); const [sel,setSel]=useState(null);
+  const filt=st.vendors.filter(v=>!q||(v.name+v.code).toLowerCase().includes(q.toLowerCase())).sort((a,b)=>a.name.localeCompare(b.name,"ko"));
+  const sv=sel?st.vendors.find(v=>v.id===sel):null;
+  return(
+    <div style={css.body}>
+      <div style={css.sb}>
+        <div style={css.sbhd}><span style={{fontSize:11,fontWeight:600,color:C.muted,textTransform:"uppercase"}}>업체 ({st.vendors.length})</span></div>
+        <input style={{...SR,margin:"6px 8px",width:"calc(100% - 16px)"}} placeholder="업체명·코드" value={q} onChange={e=>setQ(e.target.value)} />
+        <div style={css.sbl}>
+          {filt.map(v=><div key={v.id} style={sbrow(sel===v.id)} onClick={()=>setSel(v.id)}>
+            <div style={{fontSize:12,fontWeight:500,color:sel===v.id?C.blue:C.txt}}>{v.name}</div>
+            <div style={{fontSize:10,color:C.muted}}>{v.code||""}·원료 {v.matIds.length}종</div>
+          </div>)}
+        </div>
+      </div>
+      <div style={css.main}>
+        {sv?(
+          <>
+            <div style={css.mhd}>
+              <div><div style={{fontSize:14,fontWeight:600}}>{sv.name}</div><div style={{fontSize:11,color:C.muted}}>{sv.code||""}</div></div>
+              <div style={{display:"flex",gap:6}}>
+                <button style={btn()} onClick={()=>csvDownload(["원료명","신규코드","기존코드","현재재고(g)"],sv.matIds.map(id=>{const m=matById(id);return[m?.name||"",m?.newCode||"",m?.oldCode||"",m?.stock||0];}),sv.name+"_원료목록.csv")}>⬇ 다운로드</button>
+                <button style={btn("p")} onClick={()=>{const rows=[];st.vendors.sort((a,b)=>a.name.localeCompare(b.name,"ko")).forEach(v=>{v.matIds.forEach(id=>{const m=matById(id);if(m)rows.push([v.name,v.code||"",m.name,m.newCode||"",m.oldCode||"",m.stock||0]);});});csvDownload(["업체명","업체코드","원료명","신규코드","기존코드","현재재고(g)"],rows,"전체업체_원료목록.csv");}}>⬇ 전체 다운로드</button>
+              </div>
+            </div>
+            <div style={css.mb}>
+              <table style={TBL}><tbody>
+                <tr><th style={TH}>원료명</th><th style={TH}>신규코드</th><th style={TH}>기존코드</th><th style={THR}>현재재고(g)</th><th style={TH}>상태</th></tr>
+                {sv.matIds.map(id=>{const m=matById(id);if(!m)return null;return(
+                  <tr key={id}><td style={TD}><span style={{color:C.blue,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setPage("material")}>{m.name}</span></td>
+                  <td style={{...TD,color:C.blue,fontSize:10}}>{m.newCode}</td><td style={{...TD,color:C.muted,fontSize:10}}>{m.oldCode}</td>
+                  <td style={TDR}>{fmt(m.stock)}</td><td style={TD}><span style={badge(m.stock>0?"g":"r")}>{m.stock>0?"재고있음":"재고없음"}</span></td></tr>
+                );})}
+              </tbody></table>
+            </div>
+          </>
+        ):<div style={{padding:40,textAlign:"center",color:C.muted}}>업체를 선택하세요</div>}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<AuthWrapper />);
+</script>
+</body>
+</html>
