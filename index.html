@@ -19,7 +19,8 @@ window.__RAW = JSON.parse(document.getElementById("raw-data").textContent);
 const {
   useState,
   useMemo,
-  useCallback
+  useCallback,
+  useEffect
 } = React;
 const RAW = window.__RAW;
 const sb = window.supabase.createClient("https://gjxaxkutzntywjenrein.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqeGF4a3V0em50eXdqZW5yZWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2MTgzNDEsImV4cCI6MjEwNTE5NDM0MX0.6Tx3JXajRj_WhrfeOKE2dScS5v6KzFmwc-pstIR4WYc");
