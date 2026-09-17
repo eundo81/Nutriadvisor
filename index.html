@@ -559,7 +559,7 @@ function LoginPage({
     } = await sb.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.href
+        redirectTo: "https://eundo81.github.io/Nutriadvisor/"
       }
     });
     if (error) {
