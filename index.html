@@ -513,7 +513,12 @@ async function dbLoad(table) {
   return data.map(r => r.data);
 }
 async function dbUpsert(table, items) {
-  if (!items || items.length === 0) return;
+  if (!items) return;
+  // 빈 배열이면 해당 테이블 데이터 전체 삭제 (그룹 초기화 등)
+  if (items.length === 0) {
+    await sb.from(table).delete().neq('id','__none__');
+    return;
+  }
   const rows = items.map(item => ({
     id: item.id,
     data: item,
@@ -774,6 +779,8 @@ function AuthWrapper() {
     const loaded = await loadAllFromDB();
     // DB가 비어있으면 RAW 초기 데이터로 채우기
     if (loaded.materials.length === 0) {
+      // DB가 진짜 비어있을 때만 RAW로 초기화 (첫 실행)
+      console.log("DB 비어있음 - RAW 초기화");
       const init = {
         materials: JSON.parse(JSON.stringify(RAW.materials)),
         recipes: JSON.parse(JSON.stringify(RAW.recipes)),
@@ -786,7 +793,8 @@ function AuthWrapper() {
       await saveAllToDB(init);
       setDbSt(init);
     } else {
-      if (!loaded.matGroups || loaded.matGroups.length === 0) loaded.matGroups = [];
+      console.log("DB 로드 성공:", loaded.materials.length, "개 원료");
+      if (!loaded.matGroups) loaded.matGroups = [];
       setDbSt(loaded);
     }
     setAuthState("ok");
@@ -848,7 +856,12 @@ function App({
     setSt(prev => {
       const next = fn(JSON.parse(JSON.stringify(prev)));
       persist(next);
-      saveAllToDB(next).catch(e => console.error("DB 저장 오류:", e));
+      // DB 저장 (비동기)
+      saveAllToDB(next).then(() => {
+        console.log("DB 저장 완료");
+      }).catch(e => {
+        console.error("DB 저장 오류:", e);
+      });
       return next;
     });
   }, []);
@@ -2498,11 +2511,24 @@ function InHistTab({
       style: TD
     }, /*#__PURE__*/React.createElement("button", {
       style: btn("d"),
-      onClick: () => showConfirmHist("이 입고를 취소할까요? 재고에서 차감됩니다.", () => {
+      onClick: () => showConfirmHist("이 입고를 취소할까요? 재고에서 차감되고 발주 이력으로 돌아갑니다.", () => {
         upd(s => {
           const mat = s.materials.find(x => x.id === h.matId);
           if (mat) mat.stock = Math.max(0, mat.stock - h.qty);
           s.inHist = s.inHist.filter(x => x.id !== h.id);
+          // 발주이력으로 복구
+          s.inReqs.push({
+            id: "REQ_" + uid(),
+            matId: h.matId,
+            requestQty: h.qty,
+            orderQty: h.qty,
+            status: "ordered",
+            requestedAt: h.date,
+            orderedAt: h.date,
+            expectedDate: "",
+            receivedAt: "",
+            note: h.note || "입고취소 복구"
+          });
           return s;
         });
         showToast("입고가 취소됐습니다.");
