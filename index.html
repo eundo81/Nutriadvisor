@@ -20,9 +20,11 @@ const {
   useState,
   useMemo,
   useCallback,
-  useEffect
+  useEffect,
+  useRef
 } = React;
 const RAW = window.__RAW;
+const LS = "nutriadv_v4";
 const sb = window.supabase.createClient("https://gjxaxkutzntywjenrein.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqeGF4a3V0em50eXdqZW5yZWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2MTgzNDEsImV4cCI6MjEwNTE5NDM0MX0.6Tx3JXajRj_WhrfeOKE2dScS5v6KzFmwc-pstIR4WYc", {
   auth: {
     detectSessionInUrl: true,
@@ -507,19 +509,27 @@ async function dbLoad(table) {
     error
   } = await sb.from(table).select('id, data');
   if (error) {
-    console.error('dbLoad', table, error);
-    return [];
+    throw new Error(`${table} 조회 실패: ${error.message}`);
   }
-  return data.map(r => r.data);
+  return (data || []).map(r => r.data);
 }
-async function dbUpsert(table, items) {
-  if (!items) return;
-  // 빈 배열이면 해당 테이블 데이터 전체 삭제 (그룹 초기화 등)
-  if (items.length === 0) {
-    await sb.from(table).delete().neq('id','__none__');
+async function dbSync(table, items) {
+  const safeItems = Array.isArray(items) ? items : [];
+  const {
+    data: existing,
+    error: selectError
+  } = await sb.from(table).select('id');
+  if (selectError) throw new Error(`${table} 기존 데이터 확인 실패: ${selectError.message}`);
+
+  // 빈 배열이면 해당 테이블 데이터 전체 삭제
+  if (safeItems.length === 0) {
+    const {
+      error
+    } = await sb.from(table).delete().neq('id', '__none__');
+    if (error) throw new Error(`${table} 초기화 실패: ${error.message}`);
     return;
   }
-  const rows = items.map(item => ({
+  const rows = safeItems.map(item => ({
     id: item.id,
     data: item,
     updated_at: new Date().toISOString()
@@ -529,13 +539,23 @@ async function dbUpsert(table, items) {
   } = await sb.from(table).upsert(rows, {
     onConflict: 'id'
   });
-  if (error) console.error('dbUpsert', table, error);
+  if (error) throw new Error(`${table} 저장 실패: ${error.message}`);
+
+  // 화면에서 삭제된 항목은 DB에서도 삭제한다.
+  const currentIds = new Set(safeItems.map(item => item.id));
+  const removedIds = (existing || []).map(row => row.id).filter(id => !currentIds.has(id));
+  if (removedIds.length) {
+    const {
+      error: deleteError
+    } = await sb.from(table).delete().in('id', removedIds);
+    if (deleteError) throw new Error(`${table} 삭제 동기화 실패: ${deleteError.message}`);
+  }
 }
 async function dbDelete(table, id) {
   const {
     error
   } = await sb.from(table).delete().eq('id', id);
-  if (error) console.error('dbDelete', table, error);
+  if (error) throw new Error(`${table} 삭제 실패: ${error.message}`);
 }
 async function loadAllFromDB() {
   const [materials, recipes, vendors, inReqs, inHist, plans, matGroups] = await Promise.all([dbLoad('materials'), dbLoad('recipes'), dbLoad('vendors'), dbLoad('in_reqs'), dbLoad('in_hist'), dbLoad('plans'), dbLoad('mat_groups')]);
@@ -550,7 +570,7 @@ async function loadAllFromDB() {
   };
 }
 async function saveAllToDB(st) {
-  await Promise.all([dbUpsert('materials', st.materials), dbUpsert('recipes', st.recipes), dbUpsert('vendors', st.vendors), dbUpsert('in_reqs', st.inReqs), dbUpsert('in_hist', st.inHist), dbUpsert('plans', st.plans), dbUpsert('mat_groups', st.matGroups || [])]);
+  await Promise.all([dbSync('materials', st.materials), dbSync('recipes', st.recipes), dbSync('vendors', st.vendors), dbSync('in_reqs', st.inReqs), dbSync('in_hist', st.inHist), dbSync('plans', st.plans), dbSync('mat_groups', st.matGroups || [])]);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -729,10 +749,11 @@ function AccessDenied({
 // 인증 래퍼
 // ════════════════════════════════════════════════════════════
 function AuthWrapper() {
-  const [authState, setAuthState] = useState("loading"); // loading|login|denied|ok
+  const [authState, setAuthState] = useState("loading"); // loading|login|denied|error|ok
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [dbSt, setDbSt] = useState(null);
+  const [authError, setAuthError] = useState("");
   useEffect(() => {
     // 세션 확인
     sb.auth.getSession().then(({
@@ -759,45 +780,55 @@ function AuthWrapper() {
     return () => subscription.unsubscribe();
   }, []);
   const checkAccess = async u => {
-    setUser(u);
-    console.log("checkAccess user:", u.email);
-    // allowed_users 테이블에서 역할 확인
-    const {
-      data,
-      error
-    } = await sb.from("allowed_users").select("role").eq("email", u.email).single();
-    console.log("allowed_users query:", data, error);
-    // RLS 문제 임시 우회: 허용 이메일 직접 체크
-    const ALLOWED = ["eundo81@gmail.com"];
-    const role = data?.role || (ALLOWED.includes(u.email) ? "admin" : null);
-    if (!role) {
-      setAuthState("denied");
-      return;
-    }
-    setUserRole(role);
-    // DB에서 전체 데이터 로드
-    const loaded = await loadAllFromDB();
-    // DB가 비어있으면 RAW 초기 데이터로 채우기
-    if (loaded.materials.length === 0) {
-      // DB가 진짜 비어있을 때만 RAW로 초기화 (첫 실행)
-      console.log("DB 비어있음 - RAW 초기화");
-      const init = {
-        materials: JSON.parse(JSON.stringify(RAW.materials)),
-        recipes: JSON.parse(JSON.stringify(RAW.recipes)),
-        vendors: JSON.parse(JSON.stringify(RAW.vendors)),
-        inReqs: [],
-        inHist: [],
-        plans: [],
-        matGroups: []
-      };
-      await saveAllToDB(init);
-      setDbSt(init);
-    } else {
+    try {
+      setUser(u);
+      setAuthError("");
+      console.log("checkAccess user:", u.email);
+      // allowed_users 테이블에서 역할 확인
+      const {
+        data,
+        error
+      } = await sb.from("allowed_users").select("role").eq("email", u.email).single();
+      console.log("allowed_users query:", data, error);
+      // 기존 관리자 계정은 allowed_users 조회 장애 시에도 로그인할 수 있게 유지
+      const ALLOWED = ["eundo81@gmail.com"];
+      const role = data?.role || (ALLOWED.includes(u.email) ? "admin" : null);
+      if (!role) {
+        setAuthState("denied");
+        return;
+      }
+      setUserRole(role);
+
+      // DB에서 전체 데이터 로드. 조회 실패와 빈 DB를 구분한다.
+      let loaded = await loadAllFromDB();
+      if (loaded.materials.length === 0) {
+        console.log("DB 비어있음 - RAW 최초 초기화");
+        const init = {
+          materials: JSON.parse(JSON.stringify(RAW.materials)),
+          recipes: JSON.parse(JSON.stringify(RAW.recipes)),
+          vendors: JSON.parse(JSON.stringify(RAW.vendors)),
+          inReqs: [],
+          inHist: [],
+          plans: [],
+          matGroups: []
+        };
+        await saveAllToDB(init);
+        // 저장 직후 다시 읽어 실제로 조회 가능한지 검증한다.
+        loaded = await loadAllFromDB();
+        if (loaded.materials.length === 0) {
+          throw new Error("초기 데이터 저장 후에도 조회되지 않습니다. Supabase RLS의 SELECT 정책을 확인하세요.");
+        }
+      }
       console.log("DB 로드 성공:", loaded.materials.length, "개 원료");
       if (!loaded.matGroups) loaded.matGroups = [];
+      persist(loaded);
       setDbSt(loaded);
+      setAuthState("ok");
+    } catch (e) {
+      console.error("DB 연결 오류:", e);
+      setAuthError(e?.message || String(e));
+      setAuthState("error");
     }
-    setAuthState("ok");
   };
   const signOut = async () => {
     await sb.auth.signOut();
@@ -834,6 +865,45 @@ function AuthWrapper() {
     email: user?.email,
     onSignOut: signOut
   });
+  if (authState === "error") return /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "#f0ede8",
+      fontFamily: "system-ui,sans-serif"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 440,
+      maxWidth: "calc(100vw - 32px)",
+      background: "#fff",
+      padding: 28,
+      borderRadius: 10,
+      boxShadow: "0 8px 24px rgba(0,0,0,.12)",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 32,
+      marginBottom: 10
+    }
+  }, "⚠️"), /*#__PURE__*/React.createElement("b", null, "데이터베이스 연결 실패"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "12px 0 18px",
+      padding: 10,
+      background: "#fdecea",
+      color: "#a61b1b",
+      borderRadius: 6,
+      fontSize: 11,
+      lineHeight: 1.6,
+      wordBreak: "break-word"
+    }
+  }, authError), /*#__PURE__*/React.createElement("button", {
+    style: btn("p"),
+    onClick: () => window.location.reload()
+  }, "다시 시도")));
   if (authState === "ok" && dbSt) return /*#__PURE__*/React.createElement(App, {
     initSt: dbSt,
     user: user,
@@ -852,7 +922,19 @@ function App({
   const [page, setPage] = useState("recipe");
   const [dlg, setDlg] = useState(null); // {type:"confirm"|"input", ...}
   const [toast, setToast] = useState("");
-  const [saveTimer, setSaveTimer] = useState(null);
+  const didMountRef = useRef(false);
+  const isApplyingRemoteRef = useRef(false);
+  const localDirtyRef = useRef(false);
+  const remoteReloadTimerRef = useRef(null);
+  const lastLocalSaveAtRef = useRef(0);
+  const toastTimerRef = useRef(null);
+  const saveSequenceRef = useRef(0);
+  const saveQueueRef = useRef(Promise.resolve());
+  const showToast = (msg, duration = 2500) => {
+    setToast(msg);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(""), duration);
+  };
   const upd = useCallback(fn => {
     setSt(prev => {
       const next = fn(JSON.parse(JSON.stringify(prev)));
@@ -860,21 +942,92 @@ function App({
       return next;
     });
   }, []);
-  // st 변화 감지 후 DB 저장 (1초 디바운스)
+
+  // 화면 변경을 감지해 자동 저장한다. 연속 입력은 300ms 단위로 묶는다.
   useEffect(() => {
-    if (!st || !user) return; // 로그인 전에는 저장 안 함
+    if (!st || !user) return;
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    if (isApplyingRemoteRef.current) {
+      isApplyingRemoteRef.current = false;
+      return;
+    }
+    localDirtyRef.current = true;
+    const saveSequence = ++saveSequenceRef.current;
+    showToast("💾 저장 중...", 10000);
     const timer = setTimeout(() => {
-      saveAllToDB(st).then(() => {
+      saveQueueRef.current = saveQueueRef.current.catch(() => {}).then(() => saveAllToDB(st));
+      saveQueueRef.current.then(() => {
+        if (saveSequence !== saveSequenceRef.current) return;
+        persist(st);
+        localDirtyRef.current = false;
+        lastLocalSaveAtRef.current = Date.now();
         console.log("DB 저장 완료");
-      }).catch(e => console.error("DB 저장 오류:", e));
-    }, 1000);
-    return () => clearTimeout(timer);
+        showToast("✅ 저장되었습니다.", 2200);
+      }).catch(e => {
+        if (saveSequence !== saveSequenceRef.current) return;
+        console.error("DB 저장 오류:", e);
+        showToast("❌ 저장 실패: " + (e?.message || String(e)), 8000);
+      });
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [st, user]);
 
-  const showToast = msg => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 2500);
-  };
+  // Supabase 변경을 구독해 다른 창·다른 기기의 수정도 자동 반영한다.
+  useEffect(() => {
+    if (!user) return;
+    const tables = ['materials', 'recipes', 'vendors', 'in_reqs', 'in_hist', 'plans', 'mat_groups'];
+    const channelName = 'nutriadv-live-' + Math.random().toString(36).slice(2);
+    const channel = sb.channel(channelName);
+    const reloadFromDB = () => {
+      if (remoteReloadTimerRef.current) clearTimeout(remoteReloadTimerRef.current);
+      remoteReloadTimerRef.current = setTimeout(async () => {
+        // 아직 저장되지 않은 화면 변경이 있으면 먼저 로컬 저장을 마친다.
+        if (localDirtyRef.current) {
+          return;
+        }
+        try {
+          const loaded = await loadAllFromDB();
+          if (!loaded.materials.length) throw new Error("원료 데이터가 조회되지 않습니다.");
+          if (!loaded.matGroups) loaded.matGroups = [];
+          isApplyingRemoteRef.current = true;
+          persist(loaded);
+          setSt(loaded);
+          if (Date.now() - lastLocalSaveAtRef.current > 2500) {
+            showToast("🔄 다른 창의 변경사항을 반영했습니다.", 2500);
+          }
+        } catch (e) {
+          console.error("실시간 동기화 오류:", e);
+          showToast("❌ 실시간 동기화 실패: " + (e?.message || String(e)), 8000);
+        }
+      }, 400);
+    };
+    tables.forEach(table => {
+      channel.on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table
+      }, reloadFromDB);
+    });
+    channel.subscribe(status => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        showToast("⚠️ 실시간 연결 실패. 저장 기능은 계속 작동합니다.", 6000);
+      }
+    });
+    return () => {
+      if (remoteReloadTimerRef.current) clearTimeout(remoteReloadTimerRef.current);
+      sb.removeChannel(channel);
+    };
+  }, [user]);
+
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+  }, []);
+
   const showConfirm = (msg, onOk) => setDlg({
     type: "confirm",
     msg,
@@ -3843,7 +3996,6 @@ function BackupDlg({
   const [mode, setMode] = useState("menu"); // menu|export|import
   const [importText, setImportText] = useState("");
   const [importErr, setImportErr] = useState("");
-  const LS = "nutriadv_v4";
   const doExport = () => {
     const data = JSON.stringify(st, null, 2);
     // 모달에 텍스트 표시 + 클립보드
@@ -3920,7 +4072,7 @@ function BackupDlg({
       marginBottom: 14,
       lineHeight: 1.6
     }
-  }, "💡 데이터는 이 브라우저의 localStorage에 저장됩니다.", /*#__PURE__*/React.createElement("br", null), "같은 브라우저라면 새로 배포해도 데이터가 유지됩니다.", /*#__PURE__*/React.createElement("br", null), "다른 기기나 브라우저로 옮기려면 아래 백업/복원을 사용하세요."), /*#__PURE__*/React.createElement("div", {
+  }, "💡 데이터는 로그인 계정의 Supabase DB에 자동 저장됩니다.", /*#__PURE__*/React.createElement("br", null), "저장 결과는 화면 알림으로 확인할 수 있습니다.", /*#__PURE__*/React.createElement("br", null), "아래 백업은 별도의 안전 사본이 필요할 때 사용하세요."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
