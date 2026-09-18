@@ -1164,7 +1164,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.18.3"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.18.4"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -2872,11 +2872,20 @@ function ProductionPage({
     date: ""
   });
   const [recipeQ, setRecipeQ] = useState("");
+  const [recipeOpen, setRecipeOpen] = useState(false);
   const [viewMode, setViewMode] = useState("short"); // short|all — 부족원료만 or 전체 소요원료
   const [altChoice, setAltChoice] = useState({}); // {matId: {useAlt:bool, selections:{altMatId: qtyG}}}
 
   const activePlans = st.plans.filter(p => p.status === "plan");
-  const sortedRecipes = useMemo(() => st.recipes.filter(r => r.id === form.recipeId || !recipeQ || (r.name + " " + (r.code || "")).toLowerCase().includes(recipeQ.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name, "ko")), [st.recipes, recipeQ, form.recipeId]);
+  const sortedRecipes = useMemo(() => st.recipes.filter(r => form.recipeId || !recipeQ || (r.name + " " + (r.code || "")).toLowerCase().includes(recipeQ.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name, "ko")), [st.recipes, recipeQ, form.recipeId]);
+  const selectRecipe = r => {
+    setForm({
+      ...form,
+      recipeId: r.id
+    });
+    setRecipeQ(r.name + (r.code ? " (" + r.code + ")" : ""));
+    setRecipeOpen(false);
+  };
 
   // 생산계획 추가 시 부족/전체 소요원료 계산
   const previewNeeds = useMemo(() => {
@@ -2999,31 +3008,97 @@ function ProductionPage({
   }, "레시피"), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
-      display: "flex",
-      gap: 6,
-      minWidth: 0
+      minWidth: 0,
+      position: "relative"
     }
   }, /*#__PURE__*/React.createElement("input", {
     style: {
       ...INP,
-      maxWidth: 180
+      paddingRight: 30
     },
-    placeholder: "레시피명 검색",
+    placeholder: "레시피명 또는 코드 검색 후 선택",
     value: recipeQ,
-    onChange: e => setRecipeQ(e.target.value)
-  }), /*#__PURE__*/React.createElement("select", {
-    style: INP,
-    value: form.recipeId,
-    onChange: e => setForm({
-      ...form,
-      recipeId: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "-- 선택 --"), sortedRecipes.map(r => /*#__PURE__*/React.createElement("option", {
+    onFocus: () => setRecipeOpen(true),
+    onBlur: () => setTimeout(() => setRecipeOpen(false), 150),
+    onChange: e => {
+      setRecipeQ(e.target.value);
+      setForm({
+        ...form,
+        recipeId: ""
+      });
+      setRecipeOpen(true);
+    },
+    onKeyDown: e => {
+      if (e.key === "Enter" && sortedRecipes.length) {
+        e.preventDefault();
+        selectRecipe(sortedRecipes[0]);
+      }
+      if (e.key === "Escape") setRecipeOpen(false);
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    style: {
+      position: "absolute",
+      right: 2,
+      top: 2,
+      width: 26,
+      height: 26,
+      border: "none",
+      background: "transparent",
+      color: C.muted,
+      cursor: "pointer"
+    },
+    onMouseDown: e => e.preventDefault(),
+    onClick: () => setRecipeOpen(!recipeOpen)
+  }, "▾"), recipeOpen && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      top: "calc(100% + 3px)",
+      left: 0,
+      right: 0,
+      maxHeight: 230,
+      overflowY: "auto",
+      background: C.card,
+      border: `1px solid ${C.brd}`,
+      borderRadius: 6,
+      boxShadow: "0 8px 20px rgba(0,0,0,.15)",
+      zIndex: 200
+    }
+  }, sortedRecipes.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 12px",
+      color: C.muted,
+      fontSize: 11
+    }
+  }, "검색 결과가 없습니다.") : sortedRecipes.map(r => /*#__PURE__*/React.createElement("button", {
     key: r.id,
-    value: r.id
-  }, r.name, r.code ? " (" + r.code + ")" : ""))))), /*#__PURE__*/React.createElement("div", {
+    type: "button",
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      gap: 12,
+      width: "100%",
+      padding: "7px 10px",
+      border: "none",
+      borderBottom: `1px solid ${C.brd2}`,
+      background: r.id === form.recipeId ? "#eff4ff" : C.card,
+      color: C.txt,
+      textAlign: "left",
+      cursor: "pointer",
+      fontFamily: "inherit",
+      fontSize: 11
+    },
+    onMouseDown: e => {
+      e.preventDefault();
+      selectRecipe(r);
+    }
+  }, /*#__PURE__*/React.createElement("span", null, r.name), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.muted,
+      fontSize: 10,
+      whiteSpace: "nowrap"
+    }
+  }, r.code || "")))))), /*#__PURE__*/React.createElement("div", {
     style: FROW
   }, /*#__PURE__*/React.createElement("span", {
     style: FLBL
