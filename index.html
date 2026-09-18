@@ -852,19 +852,25 @@ function App({
   const [page, setPage] = useState("recipe");
   const [dlg, setDlg] = useState(null); // {type:"confirm"|"input", ...}
   const [toast, setToast] = useState("");
+  const [saveTimer, setSaveTimer] = useState(null);
   const upd = useCallback(fn => {
     setSt(prev => {
       const next = fn(JSON.parse(JSON.stringify(prev)));
       persist(next);
-      // DB 저장 (비동기)
-      saveAllToDB(next).then(() => {
-        console.log("DB 저장 완료");
-      }).catch(e => {
-        console.error("DB 저장 오류:", e);
-      });
       return next;
     });
   }, []);
+  // st 변화 감지 후 DB 저장 (1초 디바운스)
+  useEffect(() => {
+    if (!st || !user) return; // 로그인 전에는 저장 안 함
+    const timer = setTimeout(() => {
+      saveAllToDB(st).then(() => {
+        console.log("DB 저장 완료");
+      }).catch(e => console.error("DB 저장 오류:", e));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [st, user]);
+
   const showToast = msg => {
     setToast(msg);
     setTimeout(() => setToast(""), 2500);
@@ -925,7 +931,9 @@ function App({
     style: css.nav
   }, /*#__PURE__*/React.createElement("span", {
     style: css.logo
-  }, "🧪 뉴트리어드바이저"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "🧪 뉴트리어드바이저"), React.createElement("span", {
+    style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
+  }, "v2026.09.18 00:03"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -1679,6 +1687,8 @@ function MaterialPage({
     style: TH
   }, "원료명"), /*#__PURE__*/React.createElement("th", {
     style: TH
+  }, "기존코드"), /*#__PURE__*/React.createElement("th", {
+    style: TH
   }, "신규코드"), /*#__PURE__*/React.createElement("th", {
     style: TH
   }, "업체"), /*#__PURE__*/React.createElement("th", {
@@ -1722,6 +1732,12 @@ function MaterialPage({
       },
       onClick: () => setSelMat(selMat === m.id ? null : m.id)
     }, m.name)), /*#__PURE__*/React.createElement("td", {
+      style: {
+        ...TD,
+        color: C.muted,
+        fontSize: 10
+      }
+    }, m.oldCode || "-"), /*#__PURE__*/React.createElement("td", {
       style: {
         ...TD,
         color: C.blue,
@@ -2086,7 +2102,7 @@ function IncomingPage({
   showConfirm
 }) {
   const [tab, setTab] = useState("req");
-  const TABS = [["req", "📬 입고 요청"], ["order", "📦 발주 이력"], ["hist", "✅ 입고 완료 이력"]];
+  const TABS = [["req", "📬 입고 요청"], ["order", "📦 발주 관리"], ["hist", "✅ 입고 완료 이력"]];
   return /*#__PURE__*/React.createElement("div", {
     style: css.main
   }, /*#__PURE__*/React.createElement("div", {
@@ -2329,14 +2345,14 @@ function InOrderTab({
     onClick: () => csvDownload(["원료명", "업체", "요청수량(g)", "발주수량(g)", "입고예정일", "발주일", "상태"], orders.map(r => {
       const m = matById(r.matId);
       return [m?.name || "", m?.vendor || "", r.requestQty || 0, r.orderQty || 0, r.expectedDate || "", r.orderedAt || "", r.status];
-    }), "발주이력_" + td() + ".csv")
+    }), "발주관리_" + td() + ".csv")
   }, "⬇ 내보내기")), orders.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 30,
       textAlign: "center",
       color: C.muted
     }
-  }, "발주 이력 없음") : /*#__PURE__*/React.createElement("div", {
+  }, "발주 관리 없음") : /*#__PURE__*/React.createElement("div", {
     style: {
       overflowX: "auto"
     }
@@ -2387,12 +2403,12 @@ function InOrderTab({
     }, "충분")), /*#__PURE__*/React.createElement("td", {
       style: TDR
     }, /*#__PURE__*/React.createElement("input", {
-      type: "number",
+      type: "text",
       style: NI,
-      value: r.orderQty || 0,
+      value: (r.orderQty || r.requestQty || 0).toLocaleString("ko-KR"),
       onChange: e => upd(s => {
         const x = s.inReqs.find(x => x.id === r.id);
-        if (x) x.orderQty = parseInt(e.target.value) || 0;
+        if (x) x.orderQty = parseInt(e.target.value.replace(/,/g,"")) || 0;
         return s;
       })
     })), /*#__PURE__*/React.createElement("td", {
@@ -2511,12 +2527,12 @@ function InHistTab({
       style: TD
     }, /*#__PURE__*/React.createElement("button", {
       style: btn("d"),
-      onClick: () => showConfirmHist("이 입고를 취소할까요? 재고에서 차감되고 발주 이력으로 돌아갑니다.", () => {
+      onClick: () => showConfirmHist("이 입고를 취소할까요? 재고에서 차감되고 발주 관리으로 돌아갑니다.", () => {
         upd(s => {
           const mat = s.materials.find(x => x.id === h.matId);
           if (mat) mat.stock = Math.max(0, mat.stock - h.qty);
           s.inHist = s.inHist.filter(x => x.id !== h.id);
-          // 발주이력으로 복구
+          // 발주관리으로 복구
           s.inReqs.push({
             id: "REQ_" + uid(),
             matId: h.matId,
@@ -4155,6 +4171,12 @@ function VendorPage({
       },
       onClick: () => setPage("material")
     }, m.name)), /*#__PURE__*/React.createElement("td", {
+      style: {
+        ...TD,
+        color: C.muted,
+        fontSize: 10
+      }
+    }, m.oldCode || "-"), /*#__PURE__*/React.createElement("td", {
       style: {
         ...TD,
         color: C.blue,
