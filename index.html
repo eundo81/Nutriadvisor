@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;overflow:hidden}</style>
 </head>
 <body>
@@ -1342,7 +1342,8 @@ function RecipePage({
   });
   const [ingQ, setIngQ] = useState("");
   const [newIngs, setNewIngs] = useState([]);
-  const [importDlg, setImportDlg] = useState(false);
+  const importFileRef = useRef(null);
+  const [importDraft, setImportDraft] = useState(null);
   const rcp = sel ? rcpById(sel) : null;
   const filt = st.recipes.filter(r => !q || (r.name + r.code).toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name, "ko"));
   const ingHits = ingQ ? st.materials.filter(m => m.name.toLowerCase().includes(ingQ.toLowerCase()) || m.newCode.includes(ingQ) || m.oldCode.includes(ingQ)).slice(0, 8) : [];
@@ -1395,6 +1396,65 @@ function RecipePage({
     setNewIngs([]);
     showToast("추가됐습니다.");
   };
+  const downloadStandardForm = () => {
+    csvDownload(
+      ["레시피명", "레시피코드", "원료명", "업체명", "기존코드", "신규코드", "함량(%)", "비고"],
+      [],
+      "신규레시피_표준업로드_양식.xlsx"
+    );
+  };
+  const uploadStandardForm = async event => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      if (!window.XLSX) throw new Error("엑셀 처리 모듈을 불러오지 못했습니다. 인터넷 연결 후 다시 시도하세요.");
+      const workbook = window.XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = window.XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
+      const groups = [];
+      const byKey = new Map();
+      let lastName = "", lastCode = "";
+      rows.forEach((row, index) => {
+        const nameCell = String(row["레시피명"] ?? "").trim();
+        const codeCell = String(row["레시피코드"] ?? "").trim();
+        if (nameCell) {
+          lastName = nameCell;
+          lastCode = codeCell;
+        } else if (codeCell) lastCode = codeCell;
+        const recipeName = nameCell || lastName;
+        const recipeCode = codeCell || lastCode;
+        const materialName = String(row["원료명"] ?? "").trim();
+        const pctText = String(row["함량(%)"] ?? "").replace(/[% ,]/g, "").trim();
+        if (!recipeName && !materialName && !pctText) return;
+        if (!recipeName || !materialName) throw new Error((index + 2) + "행의 레시피명 또는 원료명이 비어 있습니다.");
+        const pct = Number(pctText);
+        if (!Number.isFinite(pct)) throw new Error((index + 2) + "행의 함량(%)이 숫자가 아닙니다.");
+        const key = recipeName + "\u0000" + recipeCode;
+        let recipe = byKey.get(key);
+        if (!recipe) {
+          recipe = { tmpId: uid(), name: recipeName, code: recipeCode, ings: [] };
+          byKey.set(key, recipe);
+          groups.push(recipe);
+        }
+        recipe.ings.push({
+          tmpId: uid(),
+          name: materialName,
+          vendor: String(row["업체명"] ?? "").trim(),
+          oldCode: String(row["기존코드"] ?? "").trim(),
+          newCode: String(row["신규코드"] ?? "").trim(),
+          pct,
+          note: String(row["비고"] ?? "").trim()
+        });
+      });
+      if (!groups.length) throw new Error("등록할 레시피 행이 없습니다. 표준 양식의 첫 번째 시트를 확인하세요.");
+      setImportDraft({ fileName: file.name, recipes: groups });
+      setSel(null);
+      setMode("import");
+    } catch (error) {
+      showToast("업로드 실패: " + error.message);
+    }
+  };
   return /*#__PURE__*/React.createElement("div", {
     style: css.body
   }, /*#__PURE__*/React.createElement("div", {
@@ -1419,10 +1479,21 @@ function RecipePage({
       });
       setNewIngs([]);
     }
-  }, "＋추가"), /*#__PURE__*/React.createElement("button", {
-    style: {...btn(), padding:"3px 7px", fontSize:11, marginLeft:4},
-    onClick: () => setImportDlg(true)
-  }, "📤")), /*#__PURE__*/React.createElement("input", {
+  }, "＋추가")), userRole === "admin" && /*#__PURE__*/React.createElement("div", {
+    style: { display: "flex", gap: 4, padding: "6px 8px 0" }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: { ...btn(), flex: 1, padding: "5px 4px", fontSize: 10 },
+    onClick: downloadStandardForm
+  }, "⬇ 표준 양식"), /*#__PURE__*/React.createElement("button", {
+    style: { ...btn("s"), flex: 1, padding: "5px 4px", fontSize: 10 },
+    onClick: () => importFileRef.current?.click()
+  }, "⬆ 양식 업로드"), /*#__PURE__*/React.createElement("input", {
+    ref: importFileRef,
+    type: "file",
+    accept: ".xlsx,.xls",
+    style: { display: "none" },
+    onChange: uploadStandardForm
+  })), /*#__PURE__*/React.createElement("input", {
     style: {
       ...SR,
       margin: "6px 8px",
@@ -1453,7 +1524,16 @@ function RecipePage({
     }
   }, r.code || "코드없음", "·", r.ings.length, "개"))))), /*#__PURE__*/React.createElement("div", {
     style: css.main
-  }, mode === "add" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }, mode === "import" && importDraft && /*#__PURE__*/React.createElement(StandardRecipeImport, {
+    draft: importDraft,
+    setDraft: setImportDraft,
+    st,
+    upd,
+    showToast,
+    showConfirm,
+    onCancel: () => { setImportDraft(null); setMode("view"); },
+    onRegistered: id => { setImportDraft(null); setSel(id); setMode("view"); }
+  }), mode === "add" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: css.mhd
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -1514,7 +1594,7 @@ function RecipePage({
       }]);
       setIngQ("");
     }
-  }))), mode !== "add" && rcp && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }))), mode !== "add" && mode !== "import" && rcp && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: css.mhd
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1741,20 +1821,159 @@ function RecipePage({
       });
       setIngQ("");
     }
-  })))), !rcp && mode !== "add" && /*#__PURE__*/React.createElement("div", {
+  })))), !rcp && mode !== "add" && mode !== "import" && /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 40,
       textAlign: "center",
       color: C.muted
     }
-  }, "레시피를 선택하세요"),
-  importDlg && /*#__PURE__*/React.createElement(RecipeImportDlg, {
-    st: st,
-    upd: upd,
-    matById: matById,
-    showToast: showToast,
-    onClose: () => setImportDlg(false)
-  })));
+  }, "레시피를 선택하세요")));
+}
+function normImportValue(value) {
+  return String(value ?? "").trim().toLowerCase().replace(/\s+/g, "");
+}
+function resolveImportedMaterial(ing, materials) {
+  const vendor = normImportValue(ing.vendor);
+  if (!vendor) return { status: "error", type: "vendor", material: null, message: "업체명을 입력하세요." };
+  const sameVendor = materials.filter(m => normImportValue(m.vendor) === vendor);
+  const newCode = normImportValue(ing.newCode);
+  const oldCode = normImportValue(ing.oldCode);
+  const newHits = newCode ? sameVendor.filter(m => normImportValue(m.newCode) === newCode) : [];
+  const oldHits = oldCode ? sameVendor.filter(m => normImportValue(m.oldCode) === oldCode || normImportValue(m.oldCodeRaw) === oldCode) : [];
+  if (newHits.length > 1 || oldHits.length > 1) return { status: "error", type: "duplicate_code", material: null, message: "같은 업체에서 동일 코드가 여러 원료에 등록되어 있습니다." };
+  const newHit = newHits[0] || null;
+  const oldHit = oldHits[0] || null;
+  if (newHit && oldHit && newHit.id !== oldHit.id) return {
+    status: "error",
+    type: "code_conflict",
+    material: null,
+    message: "기존코드는 ‘" + oldHit.name + "’, 신규코드는 ‘" + newHit.name + "’에 연결됩니다. 어느 원료가 맞는지 확인해 코드를 수정하세요."
+  };
+  if (newHit || oldHit) return { status: "matched", type: "code", material: newHit || oldHit, message: "업체와 코드가 일치합니다." };
+  const name = normImportValue(ing.name);
+  const nameHits = name ? sameVendor.filter(m => normImportValue(m.name) === name) : [];
+  if (nameHits.length > 1) return { status: "error", type: "duplicate_name", material: null, message: "같은 업체에 동일한 원료명이 여러 개 있습니다. 코드를 입력하세요." };
+  if (nameHits.length === 1) return { status: "matched", type: "name", material: nameHits[0], message: "업체와 원료명이 일치합니다." };
+  return { status: "new", type: "new", material: null, message: "동일 업체에서 일치하는 원료가 없어 신규 등록됩니다." };
+}
+function findImportedMaterial(ing, materials) {
+  return resolveImportedMaterial(ing, materials).material;
+}
+function nextMaterialId(materials) {
+  const max = materials.reduce((n, m) => Math.max(n, Number(String(m.id || "").match(/^MAT(\d+)$/)?.[1]) || 0), 0);
+  return "MAT" + String(max + 1).padStart(3, "0");
+}
+function StandardRecipeImport({ draft, setDraft, st, upd, showToast, showConfirm, onCancel, onRegistered }) {
+  const e = React.createElement;
+  const allIngs = draft.recipes.flatMap(r => r.ings);
+  const analyses = allIngs.map(ing => resolveImportedMaterial(ing, st.materials));
+  const matchedCount = analyses.filter(x => x.status === "matched").length;
+  const errorCount = analyses.filter(x => x.status === "error").length;
+  const newKeys = new Set(allIngs.filter((ing, i) => analyses[i].status === "new").map(ing => normImportValue(ing.vendor) + "|" + (normImportValue(ing.newCode) || normImportValue(ing.oldCode) || normImportValue(ing.name))));
+  const updateRecipe = (ri, key, value) => setDraft(d => ({ ...d, recipes: d.recipes.map((r, i) => i === ri ? { ...r, [key]: value } : r) }));
+  const updateIng = (ri, ii, key, value) => setDraft(d => ({ ...d, recipes: d.recipes.map((r, i) => i === ri ? { ...r, ings: r.ings.map((x, j) => j === ii ? { ...x, [key]: value } : x) } : r) }));
+  const removeIng = (ri, ii) => setDraft(d => ({ ...d, recipes: d.recipes.map((r, i) => i === ri ? { ...r, ings: r.ings.filter((x, j) => j !== ii) } : r) }));
+  const register = () => {
+    const projectedMaterials = st.materials.map(m => ({ ...m }));
+    for (const recipe of draft.recipes) {
+      if (!recipe.name.trim()) return showToast("레시피명이 비어 있습니다.");
+      if (!recipe.ings.length) return showToast(recipe.name + "에 원료가 없습니다.");
+      if (st.recipes.some(r => normImportValue(r.name) === normImportValue(recipe.name) || recipe.code && normImportValue(r.code) === normImportValue(recipe.code))) return showToast("이미 등록된 레시피명 또는 코드가 있습니다: " + recipe.name);
+      const total = recipe.ings.reduce((sum, ing) => sum + (Number(ing.pct) || 0), 0);
+      if (Math.abs(total - 100) > 0.01) return showToast(recipe.name + "의 함량 합계가 " + total.toFixed(3) + "%입니다. 100%로 수정하세요.");
+      if (recipe.ings.some(ing => !ing.name.trim() || !Number.isFinite(Number(ing.pct)) || Number(ing.pct) < 0)) return showToast(recipe.name + "에 확인이 필요한 원료명 또는 함량이 있습니다.");
+      for (const ing of recipe.ings) {
+        const result = resolveImportedMaterial(ing, projectedMaterials);
+        if (result.status === "error") return showToast(ing.name + ": " + result.message);
+        if (result.status === "new") projectedMaterials.push({ id: "PREVIEW_" + uid(), name: ing.name, vendor: ing.vendor, oldCode: ing.oldCode, oldCodeRaw: ing.oldCode, newCode: ing.newCode });
+      }
+    }
+    const duplicateInFile = draft.recipes.some((r, i, arr) => arr.some((x, j) => j < i && (normImportValue(x.name) === normImportValue(r.name) || r.code && normImportValue(x.code) === normImportValue(r.code))));
+    if (duplicateInFile) return showToast("업로드 파일 안에 중복된 레시피명 또는 코드가 있습니다.");
+    const commit = () => {
+      let firstId = null;
+      let newMaterialCount = 0;
+      upd(s => {
+        draft.recipes.forEach(recipe => {
+          const ings = recipe.ings.map(ing => {
+            const result = resolveImportedMaterial(ing, s.materials);
+            let material = result.material;
+            if (result.status === "new") {
+              const vendor = s.vendors.find(v => normImportValue(v.name) === normImportValue(ing.vendor));
+              const id = nextMaterialId(s.materials);
+              material = {
+                id,
+                name: ing.name.trim(),
+                vendor: ing.vendor.trim(),
+                vendorCode: vendor?.code || "",
+                oldCode: ing.oldCode.trim(),
+                oldCodeRaw: ing.oldCode.trim(),
+                newCode: ing.newCode.trim(),
+                stock: 0,
+                incoming: 0,
+                isWater: /^(정제수|purifiedwater|water)$/i.test(ing.name.trim().replace(/\s+/g, "")),
+                isInno: false,
+                isInnoChild: false,
+                altIds: [],
+                spec: "",
+                lastStocktake: ""
+              };
+              material.category = materialCategory(material);
+              s.materials.push(material);
+              if (vendor && !vendor.matIds.includes(id)) vendor.matIds.push(id);
+              newMaterialCount++;
+            }
+            if (!material) throw new Error(ing.name + " 원료의 업체 또는 코드를 다시 확인하세요.");
+            return { matId: material.id, pct: Number(ing.pct), note: ing.note.trim(), nameRaw: "" };
+          });
+          const id = "RCP_" + uid();
+          if (!firstId) firstId = id;
+          s.recipes.push({ id, name: recipe.name.trim(), code: recipe.code.trim(), ings, createdAt: td() });
+        });
+        return s;
+      });
+      showToast(draft.recipes.length + "개 레시피와 신규 원료 " + newMaterialCount + "종을 등록했습니다.");
+      onRegistered(firstId);
+    };
+    showConfirm("레시피 " + draft.recipes.length + "개와 신규 원료 " + newKeys.size + "종을 등록할까요?", commit);
+  };
+  return e(React.Fragment, null,
+    e("div", { style: css.mhd },
+      e("div", null, e("div", { style: { fontSize: 14, fontWeight: 600 } }, "표준 양식 등록 확인"), e("div", { style: { fontSize: 11, color: C.muted, marginTop: 2 } }, draft.fileName)),
+      e("div", { style: { display: "flex", gap: 6 } }, e("button", { style: btn("s"), onClick: register }, "✓ 최종 등록"), e("button", { style: btn(), onClick: onCancel }, "취소"))
+    ),
+    e("div", { style: css.mb },
+      e("div", { style: { background: errorCount ? "#fff1f0" : C.bbg, padding: "9px 12px", borderRadius: 6, fontSize: 11, color: errorCount ? C.red : C.blue, marginBottom: 10 } }, "레시피 ", draft.recipes.length, "개 · 원료 행 ", allIngs.length, "개 · 기존 원료 연결 ", matchedCount, "개 · 신규 원료 예정 ", newKeys.size, "종 · 확인 필요 ", errorCount, "개"),
+      draft.recipes.map((recipe, ri) => {
+        const total = recipe.ings.reduce((sum, ing) => sum + (Number(ing.pct) || 0), 0);
+        return e("div", { key: recipe.tmpId, style: { ...FBOX, marginBottom: 14 } },
+          e("div", { style: { display: "grid", gridTemplateColumns: "110px minmax(240px,1fr) 90px minmax(160px,.5fr)", gap: 8, alignItems: "center", marginBottom: 10 } },
+            e("b", { style: { fontSize: 11 } }, "레시피명"), e("input", { style: INP, value: recipe.name, onChange: x => updateRecipe(ri, "name", x.target.value) }),
+            e("b", { style: { fontSize: 11 } }, "레시피코드"), e("input", { style: INP, value: recipe.code, onChange: x => updateRecipe(ri, "code", x.target.value) })
+          ),
+          e("div", { style: { overflowX: "auto" } }, e("table", { style: TBL }, e("tbody", null,
+            e("tr", null, ["No.", "원료명", "업체명", "기존코드", "신규코드", "함량(%)", "비고", "처리", "삭제"].map(h => e("th", { key: h, style: h === "함량(%)" ? THR : TH }, h))),
+            recipe.ings.map((ing, ii) => {
+              const result = resolveImportedMaterial(ing, st.materials);
+              const hit = result.material;
+              return e("tr", { key: ing.tmpId },
+                e("td", { style: TD }, ii + 1),
+                e("td", { style: TD }, e("input", { style: { ...INP, minWidth: 180 }, value: ing.name, onChange: x => updateIng(ri, ii, "name", x.target.value) })),
+                e("td", { style: TD }, e("input", { style: { ...INP, minWidth: 110 }, value: ing.vendor, onChange: x => updateIng(ri, ii, "vendor", x.target.value) })),
+                e("td", { style: TD }, e("input", { style: { ...INP, minWidth: 125 }, value: ing.oldCode, onChange: x => updateIng(ri, ii, "oldCode", x.target.value) })),
+                e("td", { style: TD }, e("input", { style: { ...INP, minWidth: 110 }, value: ing.newCode, onChange: x => updateIng(ri, ii, "newCode", x.target.value) })),
+                e("td", { style: TDR }, e(NumericInput, { style: { ...NI, width: 90 }, value: ing.pct, onChange: x => updateIng(ri, ii, "pct", x.target.value === "" ? "" : Number(x.target.value)) })),
+                e("td", { style: TD }, e("input", { style: { ...INP, minWidth: 120 }, value: ing.note, onChange: x => updateIng(ri, ii, "note", x.target.value) })),
+                e("td", { style: { ...TD, minWidth: 165 } }, result.status === "error" ? e("div", null, e("span", { style: badge("r") }, "확인 필요"), e("div", { style: { color: C.red, fontSize: 9, marginTop: 3, whiteSpace: "normal" } }, result.message)) : hit ? e("div", null, e("span", { style: badge("g") }, "기존 연결"), e("div", { style: { color: C.muted, fontSize: 9, marginTop: 3 } }, hit.name, " · ", hit.vendor)) : e("span", { style: badge("b") }, "신규 예정")),
+                e("td", { style: TD }, e("button", { style: btn("d"), onClick: () => removeIng(ri, ii) }, "✕"))
+              );
+            }),
+            e("tr", { style: { background: "#f5f4f0" } }, e("td", { style: TD, colSpan: 5 }, e("b", null, "합계")), e("td", { style: { ...TDR, fontWeight: 700, color: Math.abs(total - 100) <= .01 ? C.green : C.red } }, total.toFixed(3)), e("td", { style: TD, colSpan: 3 }, Math.abs(total - 100) <= .01 ? "정상" : "100%로 수정 필요"))
+          )))
+        );
+      })
+    )
+  );
 }
 function IngEditor({
   matById,
@@ -4404,305 +4623,6 @@ function BackupDlg({
     onClick: () => setMode("menu")
   }, "← 뒤로")))));
 }
-// ════════════════════════════════════════════════════════════
-// 레시피 임포트 다이얼로그 (Claude API 활용)
-// ════════════════════════════════════════════════════════════
-function RecipeImportDlg({st, upd, matById, showToast, onClose}) {
-  const [step, setStep] = useState("upload"); // upload|analyzing|review|done
-  const [file, setFile] = useState(null);
-  const [parsed, setParsed] = useState(null); // Claude가 파싱한 결과
-  const [error, setError] = useState("");
-  const [rcpName, setRcpName] = useState("");
-  const [rcpCode, setRcpCode] = useState("");
-  const [matchedIngs, setMatchedIngs] = useState([]); // 매칭된 원료 목록
-
-  // 파일을 base64로 변환
-  const fileToBase64 = (f) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(",")[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(f);
-  });
-
-  // Claude API 호출하여 레시피 파싱
-  const analyzeFile = async () => {
-    if (!file) { setError("파일을 선택해주세요."); return; }
-    setStep("analyzing"); setError("");
-
-    try {
-      const isPdf = file.type === "application/pdf";
-      const isExcel = file.name.match(/\.(xlsx|xls)$/i);
-
-      // 원료 DB 텍스트 (Claude 참조용)
-      const matList = st.materials
-        .filter(m => !m.isWater && !m.isInno)
-        .map(m => `${m.id}|${m.name}|${m.oldCode||""}|${m.newCode||""}|${m.vendor||""}`)
-        .join("\n");
-
-      const systemPrompt = `화장품 원료 레시피 분석 전문가입니다.
-파일에서 레시피 정보를 추출하여 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없음.
-
-현재 원료 DB (ID|이름|기존코드|신규코드|업체):
-${matList.slice(0, 4000)}
-
-응답 JSON 형식:
-{"recipeName":"레시피명","recipeCode":"코드(없으면빈문자열)","ingredients":[{"rawName":"원료명","rawCode":"코드","vendor":"업체","pct":0.000,"note":"비고","matchedId":"매칭ID또는null","matchedName":"매칭원료명또는null","isNew":false}]}
-
-매칭규칙: 원료명/코드로 DB에서 찾아 matchedId/matchedName 설정. 없으면 isNew:true, matchedId:null. 정제수는 MAT001.`;
-
-      let userContent;
-
-      if (isPdf) {
-        // PDF: base64로 직접 전송
-        const base64 = await fileToBase64(file);
-        userContent = [
-          { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
-          { type: "text", text: "위 PDF에서 레시피를 추출해주세요." }
-        ];
-      } else if (isExcel) {
-        // Excel: SheetJS로 텍스트 변환 후 전송
-        const arrayBuffer = await file.arrayBuffer();
-        const wb = XLSX.read(arrayBuffer, { type: "array" });
-        let excelText = `파일명: ${file.name}\n\n`;
-        wb.SheetNames.forEach(sheetName => {
-          const ws = wb.Sheets[sheetName];
-          const csv = XLSX.utils.sheet_to_csv(ws);
-          if (csv.trim()) excelText += `=== 시트: ${sheetName} ===\n${csv}\n\n`;
-        });
-        userContent = [{ type: "text", text: `아래 Excel 내용에서 레시피를 추출해주세요:\n\n${excelText.slice(0, 8000)}` }];
-      } else {
-        throw new Error("지원하지 않는 파일 형식입니다.");
-      }
-
-      // Claude API 호출
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 4000,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userContent }]
-        })
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`API 오류 ${res.status}: ${errText.slice(0, 200)}`);
-      }
-
-      const data = await res.json();
-      const text = data.content?.[0]?.text || "";
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("응답에서 JSON을 찾을 수 없습니다: " + text.slice(0, 200));
-
-      const result = JSON.parse(jsonMatch[0]);
-      setRcpName(result.recipeName || file.name.replace(/\.(xlsx|xls|pdf)$/i, ""));
-      setRcpCode(result.recipeCode || "");
-      setMatchedIngs(result.ingredients || []);
-      setParsed(result);
-      setStep("review");
-
-    } catch (e) {
-      setError("분석 실패: " + e.message);
-      setStep("upload");
-    }
-  };
-
-  // 원료 매칭 수동 변경
-  const changeMatch = (idx, matId) => {
-    const m = matById(matId);
-    setMatchedIngs(prev => prev.map((ing, i) => i === idx
-      ? { ...ing, matchedId: matId, matchedName: m?.name || "", isNew: !matId }
-      : ing
-    ));
-  };
-
-  // 레시피 등록
-  const doImport = () => {
-    const ings = matchedIngs.map(ing => {
-      let matId = ing.matchedId;
-      // 신규 원료면 먼저 등록
-      if (ing.isNew && !matId) {
-        matId = "MAT_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,5);
-        upd(s => {
-          s.materials.push({
-            id: matId, name: ing.rawName, vendor: ing.vendor || "",
-            vendorCode: "", oldCode: ing.rawCode || "", oldCodeRaw: ing.rawCode || "",
-            newCode: "", stock: 0, incoming: 0,
-            isWater: false, isInno: false, isInnoChild: false,
-            altIds: [], spec: "", lastStocktake: ""
-          });
-          return s;
-        });
-      }
-      return { matId: matId || null, pct: ing.pct, note: ing.note || "", nameRaw: ing.rawName };
-    }).filter(i => i.matId);
-
-    const newRcp = {
-      id: "RCP_" + Date.now().toString(36),
-      name: rcpName, code: rcpCode,
-      ings: ings, createdAt: new Date().toISOString().slice(0,10)
-    };
-    upd(s => { s.recipes.push(newRcp); return s; });
-    showToast(`레시피 "${rcpName}" 등록 완료 (원료 ${ings.length}개)`);
-    onClose();
-  };
-
-  const newCount = matchedIngs.filter(i => i.isNew).length;
-  const matchedCount = matchedIngs.filter(i => !i.isNew && i.matchedId).length;
-  const unmatchedCount = matchedIngs.filter(i => !i.isNew && !i.matchedId).length;
-
-  return React.createElement("div", {
-    style: { position:"fixed", inset:0, background:"rgba(0,0,0,.5)", zIndex:600,
-             display:"flex", alignItems:"center", justifyContent:"center" }
-  },
-    React.createElement("div", {
-      style: { background:"#fff", borderRadius:12, padding:"24px 28px",
-               width:"90%", maxWidth:800, maxHeight:"90vh",
-               display:"flex", flexDirection:"column", gap:12,
-               boxShadow:"0 8px 32px rgba(0,0,0,.2)" }
-    },
-      // 헤더
-      React.createElement("div", { style:{display:"flex",justifyContent:"space-between",alignItems:"center"} },
-        React.createElement("div", null,
-          React.createElement("div", { style:{fontSize:16,fontWeight:700} }, "📤 레시피 임포트"),
-          React.createElement("div", { style:{fontSize:11,color:C.muted,marginTop:2} },
-            step==="upload"?"Excel 또는 PDF 파일을 업로드하면 Claude AI가 자동으로 레시피를 분석합니다.":
-            step==="analyzing"?"파일 분석 중...":
-            step==="review"?`분석 완료 — 매칭 ${matchedCount}개, 신규 ${newCount}개, 미매칭 ${unmatchedCount}개`:""
-          )
-        ),
-        React.createElement("button", {
-          style:{border:"none",background:"#eee",borderRadius:4,padding:"4px 10px",cursor:"pointer",fontSize:12},
-          onClick:onClose
-        }, "✕")
-      ),
-
-      step==="upload" && React.createElement("div", {style:{display:"flex",flexDirection:"column",gap:12}},
-        React.createElement("div", {
-          style:{border:"2px dashed #ccc",borderRadius:8,padding:"32px",textAlign:"center",
-                 background: file?"#f0f7ff":"#fafafa", cursor:"pointer"},
-          onDragOver: e => { e.preventDefault(); e.currentTarget.style.borderColor="#1a56db"; },
-          onDragLeave: e => { e.currentTarget.style.borderColor="#ccc"; },
-          onDrop: e => { e.preventDefault(); e.currentTarget.style.borderColor="#ccc"; const f=e.dataTransfer.files[0]; if(f)setFile(f); }
-        },
-          React.createElement("input", {
-            type:"file", accept:".xlsx,.xls,.pdf",
-            style:{display:"none"}, id:"recipe-file-input",
-            onChange: e => { setFile(e.target.files[0]); setError(""); }
-          }),
-          React.createElement("label", { htmlFor:"recipe-file-input", style:{cursor:"pointer"} },
-            React.createElement("div", {style:{fontSize:32,marginBottom:8}}, "📁"),
-            file
-              ? React.createElement("div", null,
-                  React.createElement("div", {style:{fontWeight:600,color:C.blue}}, file.name),
-                  React.createElement("div", {style:{fontSize:11,color:C.muted,marginTop:4}},
-                    (file.size/1024).toFixed(0)+"KB — 클릭하여 다른 파일 선택")
-                )
-              : React.createElement("div", null,
-                  React.createElement("div", {style:{fontWeight:500}}, "클릭하여 파일 선택"),
-                  React.createElement("div", {style:{fontSize:11,color:C.muted,marginTop:4}}, "Excel (.xlsx) 또는 PDF")
-                )
-          )
-        ),
-        error && React.createElement("div", {style:{color:C.red,fontSize:12,padding:"6px 10px",background:C.redbg,borderRadius:5}}, error),
-        React.createElement("button", {
-          style:{...btn("p"),justifyContent:"center",padding:"10px",fontSize:13},
-          onClick:analyzeFile,
-          disabled:!file
-        }, "🤖 AI로 레시피 분석 시작")
-      ),
-
-      step==="analyzing" && React.createElement("div", {style:{textAlign:"center",padding:"40px"}},
-        React.createElement("div", {style:{fontSize:32,marginBottom:12}}, "🤖"),
-        React.createElement("div", {style:{fontSize:14,fontWeight:600,marginBottom:8}}, "Claude AI가 파일을 분석 중입니다..."),
-        React.createElement("div", {style:{fontSize:12,color:C.muted}}, "원료명, 코드, 함량을 추출하고 DB와 매칭합니다.")
-      ),
-
-      step==="review" && React.createElement("div", {style:{display:"flex",flexDirection:"column",gap:10,flex:1,minHeight:0}},
-        React.createElement("div", {style:{display:"flex",gap:8}},
-          React.createElement("div", {style:{flex:1}},
-            React.createElement("div", {style:{fontSize:11,color:C.muted,marginBottom:3}}, "레시피명"),
-            React.createElement("input", {
-              style:{...INP}, value:rcpName,
-              onChange:e=>setRcpName(e.target.value)
-            })
-          ),
-          React.createElement("div", {style:{width:160}},
-            React.createElement("div", {style:{fontSize:11,color:C.muted,marginBottom:3}}, "제품코드"),
-            React.createElement("input", {
-              style:{...INP}, value:rcpCode,
-              onChange:e=>setRcpCode(e.target.value)
-            })
-          )
-        ),
-        // 요약 배지
-        React.createElement("div", {style:{display:"flex",gap:6}},
-          React.createElement("span", {style:badge("g")}, `✓ 매칭 ${matchedCount}개`),
-          newCount>0 && React.createElement("span", {style:badge("b")}, `★ 신규등록 ${newCount}개`),
-          unmatchedCount>0 && React.createElement("span", {style:badge("r")}, `! 미매칭 ${unmatchedCount}개`)
-        ),
-        // 원료 목록
-        React.createElement("div", {style:{overflowY:"auto",flex:1,minHeight:0}},
-          React.createElement("table", {style:{...TBL,marginBottom:0}},
-            React.createElement("tbody", null,
-              React.createElement("tr", null,
-                React.createElement("th", {style:{...TH,width:30}}, "No."),
-                React.createElement("th", {style:TH}, "파일 원료명"),
-                React.createElement("th", {style:TH}, "코드"),
-                React.createElement("th", {style:THR}, "함량%"),
-                React.createElement("th", {style:TH}, "DB 매칭"),
-                React.createElement("th", {style:TH}, "상태")
-              ),
-              ...matchedIngs.map((ing, i) =>
-                React.createElement("tr", {key:i, style:{background: ing.isNew?"#e8f0fe": !ing.matchedId?"#fff8e1":""}},
-                  React.createElement("td", {style:{...TD,color:C.muted}}, i+1),
-                  React.createElement("td", {style:TD},
-                    React.createElement("div", {style:{fontWeight:500}}, ing.rawName),
-                    ing.vendor && React.createElement("div", {style:{fontSize:10,color:C.muted}}, ing.vendor)
-                  ),
-                  React.createElement("td", {style:{...TD,fontSize:10,color:C.muted}}, ing.rawCode||"-"),
-                  React.createElement("td", {style:TDR}, ing.pct?.toFixed(3)),
-                  React.createElement("td", {style:TD},
-                    React.createElement("select", {
-                      style:{fontSize:11,border:"1px solid #ccc",borderRadius:4,padding:"2px 4px",
-                             maxWidth:180,color: ing.matchedId?C.txt:C.red},
-                      value: ing.matchedId||"",
-                      onChange: e => changeMatch(i, e.target.value||null)
-                    },
-                      React.createElement("option", {value:""}, ing.isNew?"[신규 원료 등록]":"-- 매칭 안됨 --"),
-                      ...st.materials.map(m =>
-                        React.createElement("option", {key:m.id, value:m.id},
-                          m.name + (m.oldCode?" ("+m.oldCode+")":""))
-                      )
-                    )
-                  ),
-                  React.createElement("td", {style:TD},
-                    ing.isNew
-                      ? React.createElement("span", {style:badge("b")}, "신규")
-                      : ing.matchedId
-                        ? React.createElement("span", {style:badge("g")}, "매칭")
-                        : React.createElement("span", {style:badge("r")}, "미매칭")
-                  )
-                )
-              )
-            )
-          )
-        ),
-        React.createElement("div", {style:{display:"flex",gap:8,justifyContent:"flex-end",paddingTop:8,borderTop:`1px solid ${C.brd}`}},
-          React.createElement("button", {style:btn(), onClick:()=>setStep("upload")}, "← 다시 업로드"),
-          React.createElement("button", {
-            style:{...btn("s"),padding:"8px 20px"},
-            onClick:doImport,
-            disabled:!rcpName.trim()
-          }, `✅ 레시피 등록 (원료 ${matchedIngs.filter(i=>i.matchedId||i.isNew).length}개)`)
-        )
-      )
-    )
-  );
-}
-
 function VendorPage({
   st,
   matById,
