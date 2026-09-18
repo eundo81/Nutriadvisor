@@ -1164,7 +1164,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.18.4"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.18.5"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -3007,13 +3007,19 @@ function ProductionPage({
     style: FLBL
   }, "레시피"), /*#__PURE__*/React.createElement("div", {
     style: {
-      flex: 1,
+      flex: "0 1 520px",
+      width: 520,
+      maxWidth: "100%",
       minWidth: 0,
       position: "relative"
     }
   }, /*#__PURE__*/React.createElement("input", {
     style: {
       ...INP,
+      display: "block",
+      width: "100%",
+      boxSizing: "border-box",
+      height: 32,
       paddingRight: 30
     },
     placeholder: "레시피명 또는 코드 검색 후 선택",
@@ -3056,7 +3062,7 @@ function ProductionPage({
       top: "calc(100% + 3px)",
       left: 0,
       right: 0,
-      maxHeight: 230,
+      maxHeight: "min(480px, 65vh)",
       overflowY: "auto",
       background: C.card,
       border: `1px solid ${C.brd}`,
