@@ -987,6 +987,7 @@ function App({
 }) {
   const [st, setSt] = useState(() => initSt);
   const [page, setPage] = useState("recipe");
+  const [productionDraft, setProductionDraft] = useState({form:{recipeId:"",qty:"",date:""},recipeQ:"",altChoice:{},applied:null,requestedKey:null});
   const [dlg, setDlg] = useState(null); // {type:"confirm"|"input", ...}
   const [toast, setToast] = useState("");
   const [saveNotice, setSaveNotice] = useState(null);
@@ -1164,7 +1165,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.18.5"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.18.6"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -1231,6 +1232,8 @@ function App({
     showToast: showToast,
     showConfirm: showConfirm
   }), page === "production" && /*#__PURE__*/React.createElement(ProductionPage, {
+    draft: productionDraft,
+    setDraft: setProductionDraft,
     st: st,
     upd: upd,
     matById: matById,
@@ -2436,168 +2439,78 @@ function IncomingPage({
     showConfirmHist: (msg, fn) => showConfirm(msg, fn)
   })));
 }
-function InReqTab({
-  st,
-  upd,
-  matById,
-  needs,
-  showToast,
-  showConfirm
-}) {
+function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
+  const [selected, setSelected] = useState([]);
   const reqs = st.inReqs.filter(r => r.status === "requested");
-  const doDelete = id => showConfirm("이 입고 요청을 삭제할까요?", () => {
-    upd(s => {
-      s.inReqs = s.inReqs.filter(r => r.id !== id);
-      return s;
-    });
-    showToast("삭제됐습니다.");
-  });
-  const doOrder = id => {
-    upd(s => {
-      const r = s.inReqs.find(x => x.id === id);
-      if (r) {
-        r.status = "ordered";
-        r.orderedAt = td();
-      }
-      return s;
-    });
-    showToast("발주 완료 처리됐습니다.");
-  };
-  const doReceive = id => {
-    const r = st.inReqs.find(x => x.id === id);
-    if (!r) return;
+  const ids = reqs.filter(r => selected.includes(r.id)).map(r => r.id);
+  const metrics = r => {
     const m = matById(r.matId);
-    if (!m) return;
+    const incoming = (m?.incoming || 0) + st.inReqs.filter(x => x.matId === r.matId && ["ordered", "confirmed"].includes(x.status)).reduce((sum, x) => sum + (x.orderQty || x.requestQty || 0), 0);
+    const need = r.planNeed ?? (needs[r.matId] || 0);
+    const shortage = r.shortageQty ?? Math.max(0, need - (m?.stock || 0) - incoming);
+    return {m, incoming, need, shortage};
+  };
+  const doDelete = targetIds => showConfirm(targetIds.length + "건의 입고 요청을 삭제할까요?", () => {
+    upd(s => { s.inReqs = s.inReqs.filter(r => !targetIds.includes(r.id) || r.status !== "requested"); return s; });
+    setSelected(prev => prev.filter(id => !targetIds.includes(id)));
+    showToast("선택한 입고 요청을 삭제했습니다.");
+  });
+  const doOrder = targetIds => {
+    const targets = reqs.filter(r => targetIds.includes(r.id));
+    if (!targets.length) return;
+    if (targets.some(r => !Number.isFinite(Number(r.requestQty)) || Number(r.requestQty) <= 0)) {
+      showToast("요청수량을 0보다 크게 입력하세요."); return;
+    }
     upd(s => {
-      const rr = s.inReqs.find(x => x.id === id);
-      const mat = s.materials.find(x => x.id === r.matId);
-      if (rr) {
-        rr.status = "received";
-        rr.receivedAt = td();
-      }
-      if (mat) mat.stock += rr?.orderQty || rr?.requestQty || 0;
-      s.inHist.push({
-        id: "H_" + uid(),
-        matId: r.matId,
-        qty: rr?.orderQty || rr?.requestQty || 0,
-        date: td(),
-        note: "입고완료"
+      s.inReqs.forEach(r => {
+        if (targetIds.includes(r.id) && r.status === "requested") {
+          r.orderQty = Number(r.requestQty);
+          r.status = "ordered";
+          r.orderedAt = td();
+        }
       });
       return s;
     });
-    showToast(m.name + " 입고 완료.");
+    setSelected(prev => prev.filter(id => !targetIds.includes(id)));
+    showToast(targets.length + "건을 발주 관리로 이동했습니다.");
   };
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: C.muted
-    }
-  }, "부족량 기준 입고 요청 목록입니다. 수량 입력 후 발주완료 처리하세요."), /*#__PURE__*/React.createElement("button", {
-    style: btn(),
-    onClick: () => csvDownload(["원료명", "업체", "현재재고(g)", "부족량(g)", "요청수량(g)", "상태"], reqs.map(r => {
-      const m = matById(r.matId);
-      const n = needs[r.matId] || 0;
-      const s = (m?.stock || 0) + (m?.incoming || 0) - n;
-      return [m?.name || "", m?.vendor || "", m?.stock || 0, Math.round(s), r.requestQty || 0, r.status];
-    }), "입고요청_" + td() + ".csv")
-  }, "⬇ 내보내기")), reqs.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 30,
-      textAlign: "center",
-      color: C.muted
-    }
-  }, "입고 요청 없음") : /*#__PURE__*/React.createElement("div", {
-    style: {
-      overflowX: "auto"
-    }
-  }, /*#__PURE__*/React.createElement("table", {
-    style: TBL
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "No."), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "구분"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "원료명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "업체"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "현재재고(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "계획소요(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "부족량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "요청수량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "요청일"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "액션")), reqs.map(r => {
-    const m = matById(r.matId);
-    if (!m) return null;
-    const n = needs[r.matId] || 0;
-    const avail = m.stock + m.incoming;
-    const short = avail - n;
-    return /*#__PURE__*/React.createElement("tr", {
-      key: r.id
-    }, /*#__PURE__*/React.createElement("td", {
-      style: TD
-    }, /*#__PURE__*/React.createElement("b", null, m.name)), /*#__PURE__*/React.createElement("td", {
-      style: {
-        ...TD,
-        color: C.muted,
-        fontSize: 10
-      }
-    }, m.vendor), /*#__PURE__*/React.createElement("td", {
-      style: TDR
-    }, fmt(m.stock)), /*#__PURE__*/React.createElement("td", {
-      style: {
-        ...TDR,
-        color: C.blue
-      }
-    }, n > 0 ? fmt(Math.round(n)) : "-"), /*#__PURE__*/React.createElement("td", {
-      style: {
-        ...TDR,
-        color: short < 0 ? C.red : "inherit",
-        fontWeight: short < 0 ? 600 : 400
-      }
-    }, fmt(Math.round(short))), /*#__PURE__*/React.createElement("td", {
-      style: TDR
-    }, /*#__PURE__*/React.createElement(NumericInput, {
-      style: NI,
-      value: r.requestQty || 0,
-      onChange: e => upd(s => {
-        const x = s.inReqs.find(x => x.id === r.id);
-        if (x) x.requestQty = parseInt(e.target.value) || 0;
-        return s;
-      })
-    })), /*#__PURE__*/React.createElement("td", {
-      style: {
-        ...TD,
-        color: C.muted,
-        fontSize: 10
-      }
-    }, r.requestedAt), /*#__PURE__*/React.createElement("td", {
-      style: TD
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 4
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      style: btn("s"),
-      onClick: () => doOrder(r.id)
-    }, "📦 발주요청"), /*#__PURE__*/React.createElement("button", {
-      style: btn("d"),
-      onClick: () => doDelete(r.id)
-    }, "🗑 삭제"))));
-  })))));
+  const e = React.createElement;
+  const headers = ["No.", "구분", "원료명", "업체", "현재재고(g)", "입고예정(g)", "계획소요(g)", "부족량(g)", "요청수량(g)"];
+  return e("div", null,
+    e("div", {style:{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap", marginBottom:10}},
+      e("span", {style:{fontSize:11,color:C.muted}}, "현재재고는 차감 전 실재고입니다. 생산계획에서 넘어온 계획소요·부족량은 요청 생성 시점 기준입니다."),
+      e("button", {style:btn("s"), disabled:!ids.length, onClick:()=>doOrder(ids)}, "선택 발주요청 (" + ids.length + ")"),
+      e("button", {style:btn("d"), disabled:!ids.length, onClick:()=>doDelete(ids)}, "선택 삭제"),
+      e("button", {style:btn(), onClick:()=>csvDownload(headers, reqs.map((r,i)=>{
+        const {m,incoming,need,shortage}=metrics(r);
+        return [i+1,m?materialCategory(m):"",m?.name||"삭제된 원료",m?.vendor||"",m?.stock||0,incoming,need,shortage,r.requestQty||0];
+      }),"입고요청_"+td()+".csv")}, "⬇ 내보내기")),
+    !reqs.length ? e("div",{style:{padding:30,textAlign:"center",color:C.muted}},"입고 요청 없음") :
+    e("div",{style:{overflowX:"auto"}},e("table",{style:TBL},
+      e("thead",null,e("tr",null,
+        e("th",{style:TH},e("input",{type:"checkbox",checked:!!reqs.length && ids.length===reqs.length,"aria-label":"전체 선택",onChange:ev=>setSelected(ev.target.checked?reqs.map(r=>r.id):[])})),
+        ...headers.map((label,i)=>e("th",{key:label,style:i>=4?THR:TH},label)),
+        e("th",{style:TH},"처리"))),
+      e("tbody",null,reqs.map((r,i)=>{
+        const {m,incoming,need,shortage}=metrics(r);
+        return e("tr",{key:r.id},
+          e("td",{style:TD},e("input",{type:"checkbox",checked:selected.includes(r.id),"aria-label":(m?.name||"원료")+" 선택",onChange:ev=>setSelected(prev=>ev.target.checked?[...prev,r.id]:prev.filter(id=>id!==r.id))})),
+          e("td",{style:TD},i+1),
+          e("td",{style:TD},m?materialCategory(m):"-"),
+          e("td",{style:TD},e("b",null,m?.name||"삭제된 원료")),
+          e("td",{style:TD},m?.vendor||"-"),
+          e("td",{style:TDR},fmt(m?.stock||0)),
+          e("td",{style:TDR},fmt(incoming)),
+          e("td",{style:TDR},fmt(Math.round(need))),
+          e("td",{style:{...TDR,color:shortage>0?C.red:C.muted}},fmt(Math.round(shortage))),
+          e("td",{style:TDR},e(NumericInput,{style:NI,value:r.requestQty??shortage,onChange:ev=>{
+            const value=Number(ev.target.value);
+            upd(s=>{const x=s.inReqs.find(x=>x.id===r.id);if(x)x.requestQty=Number.isFinite(value)?Math.max(0,value):0;return s;});
+          }})),
+          e("td",{style:TD},e("div",{style:{display:"flex",gap:4}},
+            e("button",{style:btn("s"),onClick:()=>doOrder([r.id])},"📦 발주요청"),
+            e("button",{style:btn("d"),onClick:()=>doDelete([r.id])},"🗑 삭제"))));
+      })))));
 }
 function InOrderTab({
   st,
@@ -2854,6 +2767,8 @@ function InHistTab({
 // 4. 생산계획
 // ════════════════════════════════════════════════════════════
 function ProductionPage({
+  draft,
+  setDraft,
   st,
   upd,
   matById,
@@ -2866,15 +2781,16 @@ function ProductionPage({
   const [tab, setTab] = useState("add");
   const [mode, setMode] = useState("list"); // list|cal
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({
-    recipeId: "",
-    qty: "",
-    date: ""
-  });
-  const [recipeQ, setRecipeQ] = useState("");
+  const form = draft.form;
+  const setForm = value => setDraft(prev => ({...prev, form:value}));
+  const recipeQ = draft.recipeQ;
+  const setRecipeQ = value => setDraft(prev => ({...prev, recipeQ:value}));
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [viewMode, setViewMode] = useState("short"); // short|all — 부족원료만 or 전체 소요원료
-  const [altChoice, setAltChoice] = useState({}); // {matId: {useAlt:bool, selections:{altMatId: qtyG}}}
+  const altChoice = draft.altChoice;
+  const setAltChoice = value => setDraft(prev => ({...prev, altChoice:typeof value === "function" ? value(prev.altChoice) : value}));
+  const draftKey = JSON.stringify([form.recipeId, form.qty, form.date]);
+  const appliedPlan = draft.applied?.key === draftKey ? st.plans.find(p => p.id === draft.applied.id && p.status === "plan") : null;
 
   const activePlans = st.plans.filter(p => p.status === "plan");
   const sortedRecipes = useMemo(() => st.recipes.filter(r => form.recipeId || !recipeQ || (r.name + " " + (r.code || "")).toLowerCase().includes(recipeQ.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name, "ko")), [st.recipes, recipeQ, form.recipeId]);
@@ -2890,7 +2806,7 @@ function ProductionPage({
   // 생산계획 추가 시 부족/전체 소요원료 계산
   const previewNeeds = useMemo(() => {
     if (!form.recipeId || !form.qty) return {};
-    const plans = [...activePlans.map(p => ({
+    const plans = [...activePlans.filter(p => p.id !== appliedPlan?.id).map(p => ({
       recipeId: p.recipeId,
       qty: p.qty
     })), {
@@ -2898,7 +2814,7 @@ function ProductionPage({
       qty: parseInt(form.qty) || 0
     }];
     return calcNeeds(plans, st.recipes);
-  }, [form.recipeId, form.qty, st.plans, st.recipes]);
+  }, [form.recipeId, form.qty, form.date, st.plans, st.recipes, appliedPlan?.id]);
   const previewRows = useMemo(() => {
     if (!form.recipeId || !form.qty) return [];
     const rcp = st.recipes.find(r => r.id === form.recipeId);
@@ -2930,9 +2846,11 @@ function ProductionPage({
       showToast("생산량을 입력하세요.");
       return;
     }
+    if (appliedPlan) { showToast("이미 반영한 생산계획입니다."); return; }
+    const planId = "PLN_" + uid();
     upd(s => {
       s.plans.push({
-        id: "PLN_" + uid(),
+        id: planId,
         recipeId: form.recipeId,
         qty,
         plannedDate: form.date,
@@ -2943,16 +2861,36 @@ function ProductionPage({
       });
       return s;
     });
-    setForm({
-      ...form,
-      recipeId: "",
-      qty: "",
-      date: ""
-    });
-    setRecipeQ("");
-    setTab("hist");
+    setDraft(prev => ({...prev, applied:{key:draftKey,id:planId}}));
     showToast("생산계획이 추가됐습니다.");
   };
+  const requestShortages = () => {
+    const requestKey = JSON.stringify([draftKey, altChoice]);
+    if (draft.requestedKey === requestKey && st.inReqs.some(r => r.sourceDraft === requestKey && r.status !== "cancelled")) {
+      showToast("이미 등록한 입고 요청입니다.");
+      setPage("incoming");
+      return;
+    }
+    const requests = [];
+    const append = (matId, qty, need, note) => {
+      if (qty <= 0) return;
+      requests.push({id:"REQ_"+uid(),matId,requestQty:qty,shortageQty:qty,planNeed:need,sourceDraft:requestKey,
+        orderQty:0,status:"requested",requestedAt:td(),orderedAt:"",expectedDate:"",receivedAt:"",note});
+    };
+    shorts.forEach(({m,short,need}) => {
+      const choices = altChoice[m.id] || {};
+      const totalAlt = Object.values(choices).reduce((sum,value)=>sum+(Number(value)||0),0);
+      append(m.id,Math.max(0,Math.ceil(-short)-totalAlt),need,"생산계획");
+      Object.entries(choices).forEach(([matId,qty])=>append(matId,Number(qty)||0,Number(qty)||0,"대체원료("+m.name+")"));
+    });
+    if (!requests.length) { showToast("입고 요청할 부족원료가 없습니다."); return; }
+    upd(s=>{s.inReqs.push(...requests);return s;});
+    setDraft(prev=>({...prev,requestedKey:requestKey}));
+    showToast(requests.length+"건 입고 요청이 등록됐습니다.");
+    setPage("incoming");
+  };
+  const exportNeeds = () => csvDownload(["원료명","업체","가용재고(g)","계획소요(g)","부족량(g)"],
+    display.map(r=>[r.m.name,r.m.vendor,Math.round(r.avail),Math.round(r.need),Math.max(0,Math.ceil(-r.short))]),"소요원료_"+td()+".csv");
   const applyDeduct = (p, s) => {
     const rcp = s.recipes.find(r => r.id === p.recipeId);
     if (!rcp) return;
@@ -3141,99 +3079,15 @@ function ProductionPage({
       ...form,
       date: e.target.value
     })
-  })), /*#__PURE__*/React.createElement("button", {
-    style: btn("p"),
-    onClick: addPlan
-  }, "✅ 생산계획 반영")), form.recipeId && form.qty && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 5
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...btn(viewMode === "short" ? "p" : undefined),
-      padding: "3px 8px"
-    },
-    onClick: () => setViewMode("short")
-  }, "부족 원료만 (", shorts.length, "종)"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...btn(viewMode === "all" ? "p" : undefined),
-      padding: "3px 8px"
-    },
-    onClick: () => setViewMode("all")
-  }, "전체 소요 원료 (", previewRows.length, "종)")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 5
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    style: btn(),
-    onClick: () => csvDownload(["원료명", "업체", "가용재고(g)", "필요량(g)", "부족량(g)"], display.map(r => [r.m.name, r.m.vendor, Math.round(r.avail), Math.round(r.need), Math.round(r.short)]), "소요원료_" + td() + ".csv")
-  }, "⬇ 내보내기"), shorts.length > 0 && /*#__PURE__*/React.createElement("button", {
-    style: btn("p"),
-    onClick: () => {
-      let cnt = 0;
-      shorts.forEach(({
-        m,
-        short
-      }) => {
-        const choices = altChoice[m.id];
-        const totalAlt = choices ? Object.values(choices).reduce((s, v) => s + v, 0) : 0;
-        const remain = Math.abs(Math.round(short)) - totalAlt;
-        // 원본 원료 요청 (대체로 충당 못한 나머지)
-        if (remain > 0) {
-          upd(s => {
-            s.inReqs.push({
-              id: "REQ_" + uid(),
-              matId: m.id,
-              requestQty: remain,
-              orderQty: 0,
-              status: "requested",
-              requestedAt: td(),
-              orderedAt: "",
-              expectedDate: "",
-              receivedAt: "",
-              note: "생산계획"
-            });
-            return s;
-          });
-          cnt++;
-        }
-        // 대체 원료 요청
-        if (choices) {
-          Object.entries(choices).forEach(([altId, qty]) => {
-            if (qty > 0) {
-              upd(s => {
-                s.inReqs.push({
-                  id: "REQ_" + uid(),
-                  matId: altId,
-                  requestQty: qty,
-                  orderQty: 0,
-                  status: "requested",
-                  requestedAt: td(),
-                  orderedAt: "",
-                  expectedDate: "",
-                  receivedAt: "",
-                  note: "대체원료(" + m.name + ")"
-                });
-                return s;
-              });
-              cnt++;
-            }
-          });
-        }
-      });
-      showToast(cnt + "건 입고 요청이 등록됐습니다.");
-      setPage("incoming");
-    }
-  }, "📬 부족원료 입고요청"))), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:6,flexWrap:"wrap"}},
+    React.createElement("button",{style:btn("p"),onClick:addPlan},appliedPlan?"✅ 생산계획 반영됨":"✅ 생산계획 반영"),
+    React.createElement("button",{style:btn("p"),disabled:!shorts.length,onClick:requestShortages},"📬 부족원료 입고요청"),
+    React.createElement("button",{style:btn(),disabled:!previewRows.length,onClick:exportNeeds},"⬇ 내보내기"),
+    React.createElement("button",{style:btn(),onClick:()=>setDraft({form:{recipeId:"",qty:"",date:""},recipeQ:"",altChoice:{},applied:null,requestedKey:null})},"새 계획 입력")
+  )), form.recipeId && form.qty && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style:{display:"flex",gap:5,marginBottom:8}
+  }, React.createElement("button",{style:btn(viewMode==="short"?"p":undefined),onClick:()=>setViewMode("short")},"부족 원료만 ("+shorts.length+"종)"),
+    React.createElement("button",{style:btn(viewMode==="all"?"p":undefined),onClick:()=>setViewMode("all")},"전체 소요 원료 ("+previewRows.length+"종)")), /*#__PURE__*/React.createElement("div", {
     style: {
       overflowX: "auto"
     }
@@ -3546,7 +3400,13 @@ function ProductionPage({
         });
         showToast("취소됐습니다.");
       })
-    }, "취소")), /*#__PURE__*/React.createElement("button", {
+    }, "취소")), p.status === "cancel" && /*#__PURE__*/React.createElement("button", {
+      style: btn("s"),
+      onClick: () => showConfirm("취소한 생산계획을 복원할까요? 계획소요에 다시 포함됩니다.", () => {
+        upd(s => { const x = s.plans.find(x => x.id === p.id); if (x && x.status === "cancel") x.status = "plan"; return s; });
+        showToast("생산계획을 복원했습니다.");
+      })
+    }, "복원"), /*#__PURE__*/React.createElement("button", {
       style: btn("d"),
       onClick: () => showConfirm(p.status === "done" ? "삭제 시 재고가 복귀됩니다. 계속할까요?" : "이 생산계획을 삭제할까요?", () => {
         upd(s => {
