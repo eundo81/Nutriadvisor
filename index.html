@@ -1178,7 +1178,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.18.9"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.21.1"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -1345,7 +1345,15 @@ function RecipePage({
   const importFileRef = useRef(null);
   const [importDraft, setImportDraft] = useState(null);
   const rcp = sel ? rcpById(sel) : null;
-  const filt = st.recipes.filter(r => !q || (r.name + r.code).toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  const filt = st.recipes.filter(r => {
+    const ql = q.trim().toLowerCase();
+    if (!ql) return true;
+    if ((r.name + " " + (r.code || "")).toLowerCase().includes(ql)) return true;
+    return r.ings.some(ing => {
+      const mat = matById(ing.matId);
+      return [mat?.name, mat?.newCode, mat?.oldCode, mat?.vendor, mat?.vendorCode, ing.nameRaw, ing.note].filter(Boolean).join(" ").toLowerCase().includes(ql);
+    });
+  }).sort((a, b) => a.name.localeCompare(b.name, "ko"));
   const ingHits = ingQ ? st.materials.filter(m => m.name.toLowerCase().includes(ingQ.toLowerCase()) || m.newCode.includes(ingQ) || m.oldCode.includes(ingQ)).slice(0, 8) : [];
   const startEdit = () => {
     setForm({
@@ -1499,7 +1507,7 @@ function RecipePage({
       margin: "6px 8px",
       width: "calc(100% - 16px)"
     },
-    placeholder: "레시피명·코드",
+    placeholder: "레시피·원료명·코드·업체",
     value: q,
     onChange: e => setQ(e.target.value)
   }), /*#__PURE__*/React.createElement("div", {
@@ -2032,6 +2040,50 @@ function IngEditor({
 // ════════════════════════════════════════════════════════════
 // 2. 원료 관리
 // ════════════════════════════════════════════════════════════
+function replaceMaterialInState(s, sourceId, targetId) {
+  const source = s.materials.find(x => x.id === sourceId);
+  const target = s.materials.find(x => x.id === targetId);
+  if (!source || !target || sourceId === targetId) return { recipes: 0, stock: 0, incoming: 0 };
+  const movedStock = Number(source.stock) || 0;
+  const movedIncoming = Number(source.incoming) || 0;
+  target.stock = (Number(target.stock) || 0) + movedStock;
+  target.incoming = (Number(target.incoming) || 0) + movedIncoming;
+  let recipeCount = 0;
+  s.recipes.forEach(recipe => {
+    if (!recipe.ings.some(ing => ing.matId === sourceId)) return;
+    recipeCount++;
+    const merged = [];
+    recipe.ings.forEach(ing => {
+      const next = ing.matId === sourceId ? { ...ing, matId: targetId, nameRaw: "" } : { ...ing };
+      const existing = next.matId === targetId ? merged.find(x => x.matId === targetId) : null;
+      if (existing) {
+        existing.pct = (Number(existing.pct) || 0) + (Number(next.pct) || 0);
+        const notes = [existing.note, next.note].filter(Boolean);
+        existing.note = [...new Set(notes)].join(" / ");
+      } else merged.push(next);
+    });
+    recipe.ings = merged;
+  });
+  s.inReqs.forEach(req => {
+    if (req.matId === sourceId) req.matId = targetId;
+  });
+  s.inHist.forEach(item => {
+    if (item.matId === sourceId) item.matId = targetId;
+  });
+  s.plans.forEach(plan => {
+    if (!plan.stockDeductions || plan.stockDeductions[sourceId] == null) return;
+    plan.stockDeductions[targetId] = (Number(plan.stockDeductions[targetId]) || 0) + (Number(plan.stockDeductions[sourceId]) || 0);
+    delete plan.stockDeductions[sourceId];
+  });
+  s.matGroups = (s.matGroups || []).map(group => ({ ...group, matIds: [...new Set(group.matIds.map(id => id === sourceId ? targetId : id))] })).filter(group => group.matIds.length > 1);
+  s.materials.forEach(mat => {
+    if (!Array.isArray(mat.altIds)) return;
+    mat.altIds = [...new Set(mat.altIds.map(id => id === sourceId ? targetId : id).filter(id => id !== mat.id))];
+  });
+  s.vendors.forEach(vendor => { vendor.matIds = vendor.matIds.filter(id => id !== sourceId); });
+  s.materials = s.materials.filter(mat => mat.id !== sourceId);
+  return { recipes: recipeCount, stock: movedStock, incoming: movedIncoming };
+}
 function MaterialPage({
   st,
   upd,
@@ -2297,6 +2349,7 @@ function MaterialPage({
     st: st,
     upd: upd,
     showToast: showToast,
+    showConfirm: showConfirm,
     showInput: showInput,
     onClose: () => setSelMat(null)
   }));
@@ -2306,13 +2359,52 @@ function MatPanel({
   st,
   upd,
   showToast,
+  showConfirm,
   showInput,
   onClose
 }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
+  const [replaceMode, setReplaceMode] = useState(false);
+  const [replaceQ, setReplaceQ] = useState("");
+  const [replaceTarget, setReplaceTarget] = useState(null);
   const reqs = st.inReqs.filter(r => r.matId === m.id && r.status !== "cancelled" && r.status !== "received");
   const hist = st.inHist.filter(h => h.matId === m.id).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
+  const replaceHits = st.materials.filter(x => {
+    if (x.id === m.id || x.isInnoChild) return false;
+    const q = replaceQ.trim().toLowerCase();
+    return !q || [x.name, x.newCode, x.oldCode, x.vendor, x.vendorCode, materialCategory(x)].filter(Boolean).join(" ").toLowerCase().includes(q);
+  }).sort(compareMaterials).slice(0, 60);
+  const usedRecipeCount = st.recipes.filter(r => r.ings.some(ing => ing.matId === m.id)).length;
+  const doReplace = () => {
+    const target = st.materials.find(x => x.id === replaceTarget);
+    if (!target) return showToast("대체할 원료를 선택하세요.");
+    showConfirm("‘" + m.name + "’을(를) ‘" + target.name + "’(으)로 대체할까요? 현재재고 " + fmtG(m.stock) + "과 입고예정 " + fmtG(m.incoming || 0) + "이 이전되고, " + usedRecipeCount + "개 레시피가 변경됩니다.", () => {
+      upd(s => {
+        replaceMaterialInState(s, m.id, target.id);
+        return s;
+      });
+      setReplaceMode(false);
+      setReplaceTarget(null);
+      onClose();
+      showToast("원료를 대체했습니다. 레시피 " + usedRecipeCount + "개와 재고 " + fmtG(m.stock) + "이 이전됐습니다.");
+    });
+  };
+  const doDelete = () => {
+    if (usedRecipeCount) return showToast("이 원료를 사용하는 레시피가 " + usedRecipeCount + "개 있습니다. 먼저 ‘원료 대체’를 사용하세요.");
+    if (reqs.length) return showToast("진행 중인 입고요청이 있어 삭제할 수 없습니다.");
+    showConfirm("‘" + m.name + "’ 원료를 삭제할까요? 현재재고 " + fmtG(m.stock) + "은 함께 삭제되며 복구할 수 없습니다.", () => {
+      upd(s => {
+        s.materials = s.materials.filter(x => x.id !== m.id);
+        s.vendors.forEach(v => { v.matIds = v.matIds.filter(id => id !== m.id); });
+        s.matGroups = (s.matGroups || []).map(g => ({ ...g, matIds: g.matIds.filter(id => id !== m.id) })).filter(g => g.matIds.length > 1);
+        s.materials.forEach(x => { if (Array.isArray(x.altIds)) x.altIds = x.altIds.filter(id => id !== m.id); });
+        return s;
+      });
+      onClose();
+      showToast("원료가 삭제됐습니다.");
+    });
+  };
   const statusLabel = {
     requested: "요청중",
     ordered: "발주완료",
@@ -2383,7 +2475,11 @@ function MatPanel({
   }, /*#__PURE__*/React.createElement("button", {
     style: btn(),
     onClick: () => {
-      if (editing) {
+      if (replaceMode) {
+        setReplaceMode(false);
+        setReplaceTarget(null);
+        setReplaceQ("");
+      } else if (editing) {
         setEditing(false);
       } else {
         setForm({
@@ -2399,7 +2495,7 @@ function MatPanel({
         setEditing(true);
       }
     }
-  }, editing ? "취소" : "✏️"), /*#__PURE__*/React.createElement("button", {
+  }, replaceMode || editing ? "취소" : "✏️"), /*#__PURE__*/React.createElement("button", {
     style: btn(),
     onClick: onClose
   }, "✕"))), /*#__PURE__*/React.createElement("div", {
@@ -2408,7 +2504,32 @@ function MatPanel({
       overflowY: "auto",
       padding: "10px 12px"
     }
-  }, editing ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, replaceMode ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 12, fontWeight: 600, marginBottom: 4 }
+  }, "대체 원료 선택"), /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 10, color: C.muted, lineHeight: 1.5, marginBottom: 8 }
+  }, "선택한 원료로 재고·입고예정과 사용 레시피가 이전되고 현재 원료는 삭제됩니다."), /*#__PURE__*/React.createElement("input", {
+    style: { ...SR, width: "100%", marginBottom: 8 },
+    placeholder: "원료명·코드·업체 검색",
+    value: replaceQ,
+    onChange: e => setReplaceQ(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: { border: `1px solid ${C.brd}`, borderRadius: 5, maxHeight: 360, overflowY: "auto", marginBottom: 8 }
+  }, replaceHits.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: { padding: 12, color: C.muted, fontSize: 11, textAlign: "center" }
+  }, "검색 결과가 없습니다.") : replaceHits.map(x => /*#__PURE__*/React.createElement("div", {
+    key: x.id,
+    onClick: () => setReplaceTarget(x.id),
+    style: { padding: "7px 8px", borderBottom: `1px solid ${C.brd2}`, cursor: "pointer", background: replaceTarget === x.id ? C.bbg : C.card }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 11, fontWeight: 600, color: replaceTarget === x.id ? C.blue : C.txt }
+  }, replaceTarget === x.id ? "● " : "○ ", x.name), /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 9, color: C.muted, marginTop: 2 }
+  }, x.vendor || "업체 없음", " · ", x.newCode || x.oldCode || "코드 없음", " · 재고 ", fmtG(x.stock))))), /*#__PURE__*/React.createElement("button", {
+    style: { ...btn("s"), width: "100%", justifyContent: "center" },
+    onClick: doReplace,
+    disabled: !replaceTarget
+  }, "선택한 원료로 대체 및 저장")) : editing ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 8
     }
@@ -2468,7 +2589,15 @@ function MatPanel({
       setEditing(false);
       showToast("수정됐습니다.");
     }
-  }, "저장")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionTitle, null, "기본 정보"), [["구분", materialCategory(m), ""], ["신규코드", m.newCode || "-", C.blue], ["기존코드", m.oldCode || "-", ""], ["업체", m.vendor, ""], ["업체코드", m.vendorCode || "-", ""], ["현재재고", fmtG(m.stock), ""], ["입고예정", fmtG(m.incoming || 0), C.blue], ["최근실사", m.lastStocktake || "-", ""]].map(([k, v, c]) => /*#__PURE__*/React.createElement(KV, {
+  }, "저장"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...btn("d"),
+      width: "100%",
+      justifyContent: "center",
+      marginTop: 8
+    },
+    onClick: doDelete
+  }, "🗑 원료 삭제")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionTitle, null, "기본 정보"), [["구분", materialCategory(m), ""], ["신규코드", m.newCode || "-", C.blue], ["기존코드", m.oldCode || "-", ""], ["업체", m.vendor, ""], ["업체코드", m.vendorCode || "-", ""], ["현재재고", fmtG(m.stock), ""], ["입고예정", fmtG(m.incoming || 0), C.blue], ["최근실사", m.lastStocktake || "-", ""]].map(([k, v, c]) => /*#__PURE__*/React.createElement(KV, {
     key: k,
     k: k,
     v: v,
@@ -2510,6 +2639,17 @@ function MatPanel({
       gap: 5
     }
   }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...btn("p"),
+      justifyContent: "center"
+    },
+    onClick: () => {
+      setEditing(false);
+      setReplaceQ("");
+      setReplaceTarget(null);
+      setReplaceMode(true);
+    }
+  }, "⇄ 원료 대체"), /*#__PURE__*/React.createElement("button", {
     style: {
       ...btn(),
       justifyContent: "center"
@@ -3837,7 +3977,7 @@ function StocktakePage({
       }
       return s;
     });
-    onBack();
+    setDirty({});
     showToast("재고·입고예정 변경사항을 저장 요청했습니다.");
   };
   const downloadForm = () => {
