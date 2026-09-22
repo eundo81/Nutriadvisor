@@ -1178,7 +1178,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.23.4"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.23.5"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -3262,7 +3262,7 @@ function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
     showToast(targets.length + "건을 발주 관리로 이동했습니다.");
   };
   const e = React.createElement;
-  const headers = ["No.", "구분", "원료명", "업체", "현재재고(g)", "입고예정(g)", "계획소요(g)", "부족량(g)", "요청수량(g)"];
+  const headers = ["No.", "구분", "원료명", "업체", "기존코드", "신규코드", "현재재고(g)", "입고예정(g)", "계획소요(g)", "부족량(g)", "요청수량(g)"];
   return e("div", null,
     e("div", {style:{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap", marginBottom:10}},
       e("span", {style:{fontSize:11,color:C.muted}}, "현재재고는 차감 전 실재고입니다. 생산계획에서 넘어온 계획소요·부족량은 요청 생성 시점 기준입니다."),
@@ -3270,13 +3270,13 @@ function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
       e("button", {style:btn("d"), disabled:!ids.length, onClick:()=>doDelete(ids)}, "선택 삭제"),
       e("button", {style:btn(), onClick:()=>csvDownload(headers, reqs.map((r,i)=>{
         const {m,incoming,need,shortage}=metrics(r);
-        return [i+1,m?materialCategory(m):"",m?.name||"삭제된 원료",m?.vendor||"",m?.stock||0,incoming,need,shortage,r.requestQty||0];
+        return [i+1,m?materialCategory(m):"",m?.name||"삭제된 원료",m?.vendor||"",m?.oldCode||"",m?.newCode||"",m?.stock||0,incoming,need,shortage,r.requestQty||0];
       }),"입고요청_"+td()+".csv")}, "⬇ 내보내기")),
     !reqs.length ? e("div",{style:{padding:30,textAlign:"center",color:C.muted}},"입고 요청 없음") :
     e("div",{style:{overflowX:"auto"}},e("table",{style:TBL},
       e("thead",null,e("tr",null,
         e("th",{style:TH},e("input",{type:"checkbox",checked:!!reqs.length && ids.length===reqs.length,"aria-label":"전체 선택",onChange:ev=>setSelected(ev.target.checked?reqs.map(r=>r.id):[])})),
-        ...headers.map((label,i)=>e("th",{key:label,style:i>=4?THR:TH},label)),
+        ...headers.map((label,i)=>e("th",{key:label,style:i>=6?THR:TH},label)),
         e("th",{style:TH},"처리"))),
       e("tbody",null,reqs.map((r,i)=>{
         const {m,incoming,need,shortage}=metrics(r);
@@ -3286,6 +3286,8 @@ function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
           e("td",{style:TD},m?materialCategory(m):"-"),
           e("td",{style:TD},e("b",null,m?.name||"삭제된 원료")),
           e("td",{style:TD},m?.vendor||"-"),
+          e("td",{style:{...TD,fontSize:10,color:C.muted}},m?.oldCode||"-"),
+          e("td",{style:{...TD,fontSize:10,color:C.blue}},m?.newCode||"-"),
           e("td",{style:TDR},fmt(m?.stock||0)),
           e("td",{style:TDR},fmt(incoming)),
           e("td",{style:TDR},fmt(Math.round(need))),
@@ -3553,6 +3555,41 @@ function InHistTab({
 // ════════════════════════════════════════════════════════════
 // 4. 생산계획
 // ════════════════════════════════════════════════════════════
+function applyProductionAlternativeAvailability(rows, altChoice, materials, previewNeeds) {
+  const remainingSpare = {};
+  (materials || []).forEach(m => {
+    remainingSpare[m.id] = Math.max(0, (Number(m.stock) || 0) + (Number(m.incoming) || 0) - (Number(previewNeeds?.[m.id]) || 0));
+  });
+  return rows.map(row => {
+    const baseShort = row.short;
+    let remainingDeficit = Math.max(0, -baseShort);
+    let covered = 0;
+    const altRequests = [];
+    const altUses = [];
+    Object.entries(altChoice?.[row.m.id] || {}).forEach(([matId, value]) => {
+      const intended = Math.min(Math.max(0, Number(value) || 0), remainingDeficit);
+      if (!intended) return;
+      const available = remainingSpare[matId] || 0;
+      const used = Math.min(intended, available);
+      const missing = intended - used;
+      remainingSpare[matId] = Math.max(0, available - used);
+      remainingDeficit -= intended;
+      covered += used;
+      altUses.push({matId, intended, used, missing});
+      if (missing > 0) altRequests.push({matId, qty:missing, need:intended});
+    });
+    return {
+      ...row,
+      baseAvail: row.avail,
+      baseShort,
+      avail: row.avail + covered,
+      short: row.short + covered,
+      originalRequest: remainingDeficit,
+      altRequests,
+      altUses
+    };
+  });
+}
 function ProductionPage({
   draft,
   setDraft,
@@ -3621,8 +3658,9 @@ function ProductionPage({
       };
     }).filter(Boolean).sort((a, b) => a.short - b.short);
   }, [form.recipeId, form.qty, previewNeeds, st.materials]);
-  const shorts = previewRows.filter(r => r.short < 0);
-  const display = viewMode === "short" ? shorts : previewRows;
+  const resolvedRows = useMemo(() => applyProductionAlternativeAvailability(previewRows, altChoice, st.materials, previewNeeds), [previewRows, altChoice, st.materials, previewNeeds]);
+  const shorts = resolvedRows.filter(r => r.short < 0);
+  const display = viewMode === "short" ? shorts : resolvedRows;
   const addPlan = () => {
     if (!form.recipeId) {
       showToast("레시피를 선택하세요.");
@@ -3664,11 +3702,9 @@ function ProductionPage({
       requests.push({id:"REQ_"+uid(),matId,requestQty:qty,shortageQty:qty,planNeed:need,sourceDraft:requestKey,
         orderQty:0,status:"requested",requestedAt:td(),orderedAt:"",expectedDate:"",receivedAt:"",note});
     };
-    shorts.forEach(({m,short,need}) => {
-      const choices = altChoice[m.id] || {};
-      const totalAlt = Object.values(choices).reduce((sum,value)=>sum+(Number(value)||0),0);
-      append(m.id,Math.max(0,Math.ceil(-short)-totalAlt),need,"생산계획");
-      Object.entries(choices).forEach(([matId,qty])=>append(matId,Number(qty)||0,Number(qty)||0,"대체원료("+m.name+")"));
+    shorts.forEach(({m,need,originalRequest,altRequests}) => {
+      append(m.id,Math.ceil(originalRequest),need,"생산계획");
+      altRequests.forEach(({matId,qty,need:altNeed})=>append(matId,Math.ceil(qty),altNeed,"대체원료("+m.name+")"));
     });
     if (!requests.length) { showToast("입고 요청할 부족원료가 없습니다."); return; }
     upd(s=>{s.inReqs.push(...requests);return s;});
@@ -3881,7 +3917,7 @@ function ProductionPage({
   )), form.recipeId && form.qty && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style:{display:"flex",gap:5,marginBottom:8}
   }, React.createElement("button",{style:btn(viewMode==="short"?"p":undefined),onClick:()=>setViewMode("short")},"부족 원료만 ("+shorts.length+"종)"),
-    React.createElement("button",{style:btn(viewMode==="all"?"p":undefined),onClick:()=>setViewMode("all")},"전체 소요 원료 ("+previewRows.length+"종)")), /*#__PURE__*/React.createElement("div", {
+    React.createElement("button",{style:btn(viewMode==="all"?"p":undefined),onClick:()=>setViewMode("all")},"전체 소요 원료 ("+resolvedRows.length+"종)")), /*#__PURE__*/React.createElement("div", {
     style: {
       overflowX: "auto"
     }
@@ -3900,7 +3936,7 @@ function ProductionPage({
   }, "부족량(g)"), /*#__PURE__*/React.createElement("th", {
     style: TH
   }, "대체원료")), display.length === 0 ? /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-    colSpan: 5,
+    colSpan: 6,
     style: {
       ...TD,
       textAlign: "center",
@@ -3910,16 +3946,18 @@ function ProductionPage({
     m,
     need,
     avail,
-    short
+    short,
+    baseShort
   }) => {
     const grp = st.matGroups ? st.matGroups.find(g => g.matIds.includes(m.id) && g.matIds.length > 1) : null;
     const alts = grp ? grp.matIds.filter(id => id !== m.id).map(id => st.materials.find(x => x.id === id)).filter(Boolean) : [];
-    const altStock = alts.reduce((s, a) => s + a.stock, 0);
+    const altStock = alts.reduce((s, a) => s + (Number(a.stock)||0) + (Number(a.incoming)||0), 0);
+    const hasSelectedAlt = Object.keys(altChoice[m.id] || {}).length > 0;
     return /*#__PURE__*/React.createElement("tr", {
       key: m.id
     }, /*#__PURE__*/React.createElement("td", {
       style: TD
-    }, /*#__PURE__*/React.createElement("div", null, m.name), alts.length > 0 && short < 0 && /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", null, m.name), alts.length > 0 && (short < 0 || hasSelectedAlt) && /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 4,
         padding: "4px 6px",
@@ -3952,7 +3990,7 @@ function ProductionPage({
             ...altChoice,
             [m.id]: {
               ...cur,
-              [a.id]: Math.abs(Math.round(short))
+              [a.id]: Math.abs(Math.round(baseShort ?? short))
             }
           });
         } else {
@@ -3975,7 +4013,7 @@ function ProductionPage({
         color: C.muted,
         marginRight: 4
       }
-    }, fmt(a.stock) + "g 보유"), altChoice[m.id] && altChoice[m.id][a.id] !== undefined && React.createElement(NumericInput, {
+    }, fmt((Number(a.stock)||0)+(Number(a.incoming)||0)) + "g 가용"), altChoice[m.id] && altChoice[m.id][a.id] !== undefined && React.createElement(NumericInput, {
       style: {
         width: 70,
         padding: "1px 4px",
