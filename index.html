@@ -1178,7 +1178,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.21.1"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.22.2"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -2084,6 +2084,75 @@ function replaceMaterialInState(s, sourceId, targetId) {
   s.materials = s.materials.filter(mat => mat.id !== sourceId);
   return { recipes: recipeCount, stock: movedStock, incoming: movedIncoming };
 }
+const blankManualMaterialForm = () => ({
+  category: "기능성",
+  name: "",
+  newCode: "",
+  oldCode: "",
+  vendor: "",
+  vendorCode: "",
+  stock: 0,
+  incoming: 0,
+  spec: ""
+});
+function normalizeMaterialText(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+function normalizeMaterialCode(value) {
+  return String(value || "").trim().replace(/\s+/g, "").toUpperCase();
+}
+function findManualMaterialConflict(materials, form) {
+  const vendor = normalizeMaterialText(form.vendor);
+  const name = normalizeMaterialText(form.name);
+  const codes = [form.newCode, form.oldCode].map(normalizeMaterialCode).filter(Boolean);
+  const sameVendor = materials.filter(m => normalizeMaterialText(m.vendor) === vendor);
+  const codeMatches = sameVendor.filter(m => {
+    const existingCodes = [m.newCode, m.oldCode].map(normalizeMaterialCode).filter(Boolean);
+    return codes.some(code => existingCodes.includes(code));
+  });
+  const uniqueMatches = [...new Map(codeMatches.map(m => [m.id, m])).values()];
+  if (uniqueMatches.length > 1) return { type: "code_split", materials: uniqueMatches };
+  if (uniqueMatches.length === 1) return { type: "code", materials: uniqueMatches };
+  const nameMatch = sameVendor.find(m => normalizeMaterialText(m.name) === name);
+  if (nameMatch) return { type: "name", materials: [nameMatch] };
+  return null;
+}
+function addManualMaterialInState(s, form, materialId) {
+  const vendorName = form.vendor.trim();
+  let vendor = s.vendors.find(v => normalizeMaterialText(v.name) === normalizeMaterialText(vendorName));
+  if (!vendor) {
+    vendor = {
+      id: "VND_" + uid(),
+      name: vendorName,
+      code: form.vendorCode.trim(),
+      matIds: []
+    };
+    s.vendors.push(vendor);
+  } else if (!vendor.code && form.vendorCode.trim()) {
+    vendor.code = form.vendorCode.trim();
+  }
+  const material = {
+    id: materialId || "MAT_" + uid(),
+    name: form.name.trim(),
+    vendor: vendor.name,
+    vendorCode: vendor.code || form.vendorCode.trim(),
+    oldCode: form.oldCode.trim(),
+    oldCodeRaw: form.oldCode.trim(),
+    newCode: form.newCode.trim(),
+    category: MATERIAL_CATEGORIES.includes(form.category) ? form.category : "기능성",
+    stock: Number(form.stock) || 0,
+    incoming: Number(form.incoming) || 0,
+    isWater: false,
+    isInno: false,
+    isInnoChild: false,
+    altIds: [],
+    spec: form.spec.trim(),
+    lastStocktake: ""
+  };
+  s.materials.push(material);
+  if (!vendor.matIds.includes(material.id)) vendor.matIds.push(material.id);
+  return material;
+}
 function MaterialPage({
   st,
   upd,
@@ -2098,6 +2167,7 @@ function MaterialPage({
   const [q, setQ] = useState("");
   const [lowDays, setLowDays] = useState(30);
   const [selMat, setSelMat] = useState(null);
+  const [adding, setAdding] = useState(false);
   const all = st.materials.filter(m => !m.isInnoChild).sort(compareMaterials);
   const getIncoming = m => (m.incoming || 0) + st.inReqs.filter(r => r.matId === m.id && (r.status === "ordered" || r.status === "confirmed") && !r.receivedAt).reduce((s, r) => s + (r.orderQty || 0), 0);
   const getAvail = m => m.stock + getIncoming(m);
@@ -2155,6 +2225,12 @@ function MaterialPage({
       gap: 6
     }
   }, /*#__PURE__*/React.createElement("button", {
+    style: btn("s"),
+    onClick: () => {
+      setSelMat(null);
+      setAdding(true);
+    }
+  }, "+ 원료 추가"), /*#__PURE__*/React.createElement("button", {
     style: btn("p"),
     onClick: () => setPage("stocktake")
   }, "📋 재고 실사"), /*#__PURE__*/React.createElement("button", {
@@ -2297,7 +2373,10 @@ function MaterialPage({
         cursor: "pointer",
         textDecoration: "underline"
       },
-      onClick: () => setSelMat(selMat === m.id ? null : m.id)
+      onClick: () => {
+        setAdding(false);
+        setSelMat(selMat === m.id ? null : m.id);
+      }
     }, m.name)), /*#__PURE__*/React.createElement("td", {
       style: {
         ...TD,
@@ -2344,7 +2423,16 @@ function MaterialPage({
       style: btn(),
       onClick: () => doRequest(m.id)
     }, "📬 요청"))));
-  })))))), selM && /*#__PURE__*/React.createElement(MatPanel, {
+  })))))), adding ? /*#__PURE__*/React.createElement(MatAddPanel, {
+    st: st,
+    upd: upd,
+    showToast: showToast,
+    onSaved: id => {
+      setAdding(false);
+      setSelMat(id);
+    },
+    onClose: () => setAdding(false)
+  }) : selM && /*#__PURE__*/React.createElement(MatPanel, {
     m: selM,
     st: st,
     upd: upd,
@@ -2353,6 +2441,89 @@ function MaterialPage({
     showInput: showInput,
     onClose: () => setSelMat(null)
   }));
+}
+function MatAddPanel({
+  st,
+  upd,
+  showToast,
+  onSaved,
+  onClose
+}) {
+  const [form, setForm] = useState(blankManualMaterialForm());
+  const save = () => {
+    if (!form.name.trim()) return showToast("원료명을 입력하세요.");
+    if (!form.vendor.trim()) return showToast("업체명을 입력하세요.");
+    const existingVendor = st.vendors.find(v => normalizeMaterialText(v.name) === normalizeMaterialText(form.vendor));
+    if (existingVendor?.code && form.vendorCode.trim() && normalizeMaterialCode(existingVendor.code) !== normalizeMaterialCode(form.vendorCode)) {
+      return showToast("동일 업체에 등록된 업체코드와 다릅니다. 업체코드를 확인하세요.");
+    }
+    const conflict = findManualMaterialConflict(st.materials, form);
+    if (conflict) {
+      const names = conflict.materials.map(m => m.name + " (" + (m.newCode || m.oldCode || "코드 없음") + ")").join(", ");
+      if (conflict.type === "code_split") return showToast("입력한 두 코드가 서로 다른 기존 원료에 연결됩니다: " + names);
+      return showToast("동일 업체의 기존 원료와 중복됩니다: " + names + ". 기존 원료를 수정하세요.");
+    }
+    const addedId = "MAT_" + uid();
+    upd(s => {
+      addManualMaterialInState(s, form, addedId);
+      return s;
+    });
+    showToast("원료가 추가됐습니다.");
+    onSaved(addedId);
+  };
+  const fields = [["원료명 *", "name", "text"], ["신규코드", "newCode", "text"], ["기존코드", "oldCode", "text"], ["업체명 *", "vendor", "text"], ["업체코드", "vendorCode", "text"], ["현재재고(g)", "stock", "number"], ["입고예정(g)", "incoming", "number"], ["규격·비고", "spec", "text"]];
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 320,
+      background: C.card,
+      borderLeft: `1px solid ${C.brd}`,
+      display: "flex",
+      flexDirection: "column",
+      flexShrink: 0,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "9px 12px",
+      borderBottom: `1px solid ${C.brd}`,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: { fontSize: 13, fontWeight: 600 }
+  }, "신규 원료 추가"), /*#__PURE__*/React.createElement("button", {
+    style: btn(),
+    onClick: onClose
+  }, "✕")), /*#__PURE__*/React.createElement("div", {
+    style: { flex: 1, overflowY: "auto", padding: "10px 12px" }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 10, color: C.muted, lineHeight: 1.5, marginBottom: 10 }
+  }, "업체가 같고 신규·기존 코드 중 하나라도 기존 원료와 같으면 중복 등록되지 않습니다."), /*#__PURE__*/React.createElement("div", {
+    style: { marginBottom: 8 }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 10, color: C.muted, marginBottom: 3 }
+  }, "구분"), /*#__PURE__*/React.createElement("select", {
+    style: { ...INP, width: "100%", fontSize: 11 },
+    value: form.category,
+    onChange: e => setForm({ ...form, category: e.target.value })
+  }, MATERIAL_CATEGORIES.map(c => /*#__PURE__*/React.createElement("option", {
+    key: c,
+    value: c
+  }, c)))), fields.map(([label, key, type]) => /*#__PURE__*/React.createElement("div", {
+    key: key,
+    style: { marginBottom: 8 }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 10, color: C.muted, marginBottom: 3 }
+  }, label), /*#__PURE__*/React.createElement(type === "number" ? NumericInput : "input", {
+    type: type === "number" ? undefined : type,
+    style: { ...INP, width: "100%", fontSize: 11 },
+    value: form[key] ?? "",
+    onChange: e => setForm({ ...form, [key]: type === "number" ? Number(e.target.value) || 0 : e.target.value })
+  }))), /*#__PURE__*/React.createElement("button", {
+    style: { ...btn("s"), width: "100%", justifyContent: "center", marginTop: 4 },
+    onClick: save
+  }, "원료 등록")));
 }
 function MatPanel({
   m,
