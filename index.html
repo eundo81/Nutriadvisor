@@ -1178,7 +1178,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.22.3"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.23.4"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -1852,6 +1852,11 @@ function vendorNamesMatch(inputVendor, storedVendor, storedVendorCode) {
   return !!code && inputParts.some(x => x === code);
 }
 function resolveImportedMaterial(ing, materials) {
+  if (ing.manualMatId) {
+    const manual = materials.find(m => m.id === ing.manualMatId);
+    if (!manual) return { status: "error", type: "manual_missing", material: null, message: "직접 선택한 기존 원료를 찾을 수 없습니다. 다시 매칭하세요." };
+    return { status: "matched", type: "manual", material: manual, message: "사용자가 직접 연결한 원료입니다." };
+  }
   if (!normImportValue(ing.vendor)) return { status: "error", type: "vendor", material: null, message: "업체명을 입력하세요." };
   const sameVendor = materials.filter(m => vendorNamesMatch(ing.vendor, m.vendor, m.vendorCode));
   const newCode = normImportValue(ing.newCode);
@@ -1884,6 +1889,7 @@ function nextMaterialId(materials) {
 }
 function StandardRecipeImport({ draft, setDraft, st, upd, showToast, showConfirm, onCancel, onRegistered }) {
   const e = React.createElement;
+  const [matchEditor, setMatchEditor] = useState(null);
   const allIngs = draft.recipes.flatMap(r => r.ings);
   const analyses = allIngs.map(ing => resolveImportedMaterial(ing, st.materials));
   const matchedCount = analyses.filter(x => x.status === "matched").length;
@@ -1910,10 +1916,11 @@ function StandardRecipeImport({ draft, setDraft, st, upd, showToast, showConfirm
     const duplicateInFile = draft.recipes.some((r, i, arr) => arr.some((x, j) => j < i && (normImportValue(x.name) === normImportValue(r.name) || r.code && normImportValue(x.code) === normImportValue(r.code))));
     if (duplicateInFile) return showToast("업로드 파일 안에 중복된 레시피명 또는 코드가 있습니다.");
     const commit = () => {
-      let firstId = null;
-      let newMaterialCount = 0;
+      const recipeIds = draft.recipes.map(() => "RCP_" + uid());
+      const firstId = recipeIds[0] || null;
+      const expectedNewMaterialCount = newKeys.size;
       upd(s => {
-        draft.recipes.forEach(recipe => {
+        draft.recipes.forEach((recipe, recipeIndex) => {
           const ings = recipe.ings.map(ing => {
             const result = resolveImportedMaterial(ing, s.materials);
             let material = result.material;
@@ -1940,18 +1947,16 @@ function StandardRecipeImport({ draft, setDraft, st, upd, showToast, showConfirm
               material.category = materialCategory(material);
               s.materials.push(material);
               if (vendor && !vendor.matIds.includes(id)) vendor.matIds.push(id);
-              newMaterialCount++;
             }
             if (!material) throw new Error(ing.name + " 원료의 업체 또는 코드를 다시 확인하세요.");
             return { matId: material.id, pct: Number(ing.pct), note: ing.note.trim(), nameRaw: "" };
           });
-          const id = "RCP_" + uid();
-          if (!firstId) firstId = id;
+          const id = recipeIds[recipeIndex];
           s.recipes.push({ id, name: recipe.name.trim(), code: recipe.code.trim(), ings, createdAt: td() });
         });
         return s;
       });
-      showToast(draft.recipes.length + "개 레시피와 신규 원료 " + newMaterialCount + "종을 등록했습니다.");
+      showToast(draft.recipes.length + "개 레시피와 신규 원료 " + expectedNewMaterialCount + "종을 등록했습니다.");
       onRegistered(firstId);
     };
     showConfirm("레시피 " + draft.recipes.length + "개와 신규 원료 " + newKeys.size + "종을 등록할까요?", commit);
@@ -1983,7 +1988,10 @@ function StandardRecipeImport({ draft, setDraft, st, upd, showToast, showConfirm
                 e("td", { style: TD }, e("input", { style: { ...INP, minWidth: 110 }, value: ing.newCode, onChange: x => updateIng(ri, ii, "newCode", x.target.value) })),
                 e("td", { style: TDR }, e(NumericInput, { style: { ...NI, width: 90 }, value: ing.pct, onChange: x => updateIng(ri, ii, "pct", x.target.value === "" ? "" : Number(x.target.value)) })),
                 e("td", { style: TD }, e("input", { style: { ...INP, minWidth: 120 }, value: ing.note, onChange: x => updateIng(ri, ii, "note", x.target.value) })),
-                e("td", { style: { ...TD, minWidth: 165 } }, result.status === "error" ? e("div", null, e("span", { style: badge("r") }, "확인 필요"), e("div", { style: { color: C.red, fontSize: 9, marginTop: 3, whiteSpace: "normal" } }, result.message)) : hit ? e("div", null, e("span", { style: badge("g") }, "기존 연결"), e("div", { style: { color: C.muted, fontSize: 9, marginTop: 3 } }, hit.name, " · ", hit.vendor)) : e("span", { style: badge("b") }, "신규 예정")),
+                e("td", { style: { ...TD, minWidth: 180 } },
+                  result.status === "error" ? e("div", null, e("span", { style: badge("r") }, "확인 필요"), e("div", { style: { color: C.red, fontSize: 9, marginTop: 3, whiteSpace: "normal" } }, result.message)) : hit ? e("div", null, e("span", { style: badge(result.type === "manual" ? "b" : "g") }, result.type === "manual" ? "수동 연결" : "기존 연결"), e("div", { style: { color: C.muted, fontSize: 9, marginTop: 3 } }, hit.name, " · ", hit.vendor)) : e("span", { style: badge("b") }, "신규 예정"),
+                  e("button", { style: { ...btn(), marginTop: 5, padding: "2px 6px", fontSize: 9 }, onClick: () => setMatchEditor({ ri, ii }) }, hit ? "연결 변경·DB 수정" : "기존 원료 직접 찾기")
+                ),
                 e("td", { style: TD }, e("button", { style: btn("d"), onClick: () => removeIng(ri, ii) }, "✕"))
               );
             }),
@@ -1991,8 +1999,223 @@ function StandardRecipeImport({ draft, setDraft, st, upd, showToast, showConfirm
           )))
         );
       })
-    )
+    ),
+    matchEditor && draft.recipes[matchEditor.ri]?.ings[matchEditor.ii] && e(ImportMaterialMatcher, {
+      ing: draft.recipes[matchEditor.ri].ings[matchEditor.ii],
+      st,
+      upd,
+      showToast,
+      showConfirm,
+      onApply: materialId => {
+        updateIng(matchEditor.ri, matchEditor.ii, "manualMatId", materialId);
+        setMatchEditor(null);
+      },
+      onAuto: () => {
+        updateIng(matchEditor.ri, matchEditor.ii, "manualMatId", "");
+        setMatchEditor(null);
+      },
+      onClose: () => setMatchEditor(null)
+    })
   );
+}
+function updateMaterialFromImportInState(s, materialId, form) {
+  const material = s.materials.find(m => m.id === materialId);
+  if (!material) return null;
+  s.vendors.forEach(v => {
+    v.matIds = (v.matIds || []).filter(id => id !== materialId);
+  });
+  let vendor = s.vendors.find(v => vendorNamesMatch(form.vendor, v.name, v.code));
+  if (!vendor) {
+    vendor = {
+      id: "VND_" + uid(),
+      name: form.vendor.trim(),
+      code: form.vendorCode.trim(),
+      matIds: []
+    };
+    s.vendors.push(vendor);
+  } else if (!vendor.code && form.vendorCode.trim()) {
+    vendor.code = form.vendorCode.trim();
+  }
+  if (!vendor.matIds.includes(materialId)) vendor.matIds.push(materialId);
+  material.name = form.name.trim();
+  material.vendor = form.vendor.trim();
+  material.vendorCode = form.vendorCode.trim() || vendor.code || "";
+  material.oldCode = form.oldCode.trim();
+  material.oldCodeRaw = form.oldCode.trim();
+  material.newCode = form.newCode.trim();
+  material.category = MATERIAL_CATEGORIES.includes(form.category) ? form.category : materialCategory(material);
+  material.spec = form.spec.trim();
+  return material;
+}
+function ImportMaterialMatcher({ ing, st, upd, showToast, showConfirm, onApply, onAuto, onClose }) {
+  const e = React.createElement;
+  const autoHit = resolveImportedMaterial({ ...ing, manualMatId: "" }, st.materials).material;
+  const [q, setQ] = useState(ing.newCode || ing.oldCode || ing.name || "");
+  const [selectedId, setSelectedId] = useState(ing.manualMatId || autoHit?.id || "");
+  const [form, setForm] = useState({
+    category: "기능성",
+    name: "",
+    vendor: "",
+    vendorCode: "",
+    oldCode: "",
+    newCode: "",
+    spec: ""
+  });
+  const selected = st.materials.find(m => m.id === selectedId) || null;
+  useEffect(() => {
+    if (!selected) return;
+    setForm({
+      category: materialCategory(selected),
+      name: selected.name || "",
+      vendor: selected.vendor || "",
+      vendorCode: selected.vendorCode || "",
+      oldCode: selected.oldCode || "",
+      newCode: selected.newCode || "",
+      spec: selected.spec || ""
+    });
+  }, [selectedId]);
+  const qTokens = String(q || "").trim().split(/\s+/).map(normImportValue).filter(Boolean);
+  const hits = st.materials.filter(m => {
+    if (m.isInnoChild) return false;
+    const haystack = [m.name, m.vendor, m.vendorCode, m.oldCode, m.oldCodeRaw, m.newCode].map(normImportValue).join("|");
+    return qTokens.every(token => haystack.includes(token));
+  }).sort(compareMaterials).slice(0, 80);
+  const linkOnly = () => {
+    if (!selected) return showToast("연결할 기존 원료를 선택하세요.");
+    onApply(selected.id);
+    showToast("선택한 기존 원료와 직접 연결했습니다.");
+  };
+  const saveAndLink = () => {
+    if (!selected) return showToast("수정할 기존 원료를 선택하세요.");
+    if (!form.name.trim()) return showToast("DB 원료명을 입력하세요.");
+    if (!form.vendor.trim()) return showToast("DB 업체명을 입력하세요.");
+    const existingVendor = st.vendors.find(v => vendorNamesMatch(form.vendor, v.name, v.code));
+    if (existingVendor?.code && form.vendorCode.trim() && normalizeMaterialCode(existingVendor.code) !== normalizeMaterialCode(form.vendorCode)) return showToast("동일 업체의 기존 업체코드와 다릅니다. 업체코드를 확인하세요.");
+    const conflict = findManualMaterialConflict(st.materials.filter(m => m.id !== selected.id), form);
+    if (conflict) {
+      const names = conflict.materials.map(m => m.name + " (" + (m.newCode || m.oldCode || "코드 없음") + ")").join(", ");
+      return showToast("수정할 정보가 다른 기존 원료와 중복됩니다: " + names);
+    }
+    showConfirm("‘" + selected.name + "’의 DB 정보를 수정할까요? 이 원료를 사용 중인 기존 레시피에도 변경된 원료명·업체명·코드가 표시됩니다.", () => {
+      upd(s => {
+        updateMaterialFromImportInState(s, selected.id, form);
+        return s;
+      });
+      onApply(selected.id);
+      showToast("기존 원료 DB를 수정하고 해당 원료로 연결했습니다.");
+    });
+  };
+  const compareRows = [
+    ["원료명", ing.name || "-", "name"],
+    ["업체명", ing.vendor || "-", "vendor"],
+    ["기존코드", ing.oldCode || "-", "oldCode"],
+    ["신규코드", ing.newCode || "-", "newCode"],
+    ["업체코드", "-", "vendorCode"],
+    ["규격·비고", ing.note || "-", "spec"]
+  ];
+  return e("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,.38)",
+      zIndex: 400,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 20
+    }
+  }, e("div", {
+    style: {
+      width: "min(1080px,96vw)",
+      maxHeight: "92vh",
+      background: C.card,
+      borderRadius: 10,
+      boxShadow: "0 12px 34px rgba(0,0,0,.28)",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column"
+    }
+  }, e("div", {
+    style: { ...css.mhd, flexShrink: 0 }
+  }, e("div", null, e("div", {
+    style: { fontSize: 14, fontWeight: 600 }
+  }, "기존 원료 직접 매칭 및 DB 수정"), e("div", {
+    style: { fontSize: 10, color: C.muted, marginTop: 2 }
+  }, "업로드 원료: ", ing.name, " · ", ing.vendor || "업체 없음")), e("button", {
+    style: btn(),
+    onClick: onClose
+  }, "✕")), e("div", {
+    style: { padding: 12, overflowY: "auto" }
+  }, e("div", {
+    style: { display: "grid", gridTemplateColumns: "minmax(260px,.8fr) minmax(520px,1.4fr)", gap: 12, alignItems: "start" }
+  }, e("div", {
+    style: FBOX
+  }, e("b", {
+    style: { fontSize: 12 }
+  }, "① 기존 원료 검색·선택"), e("input", {
+    style: { ...SR, width: "100%", margin: "8px 0" },
+    placeholder: "원료명·업체·코드 검색",
+    value: q,
+    onChange: x => setQ(x.target.value)
+  }), e("div", {
+    style: { maxHeight: 470, overflowY: "auto", border: `1px solid ${C.brd}`, borderRadius: 5 }
+  }, hits.length ? hits.map(m => e("div", {
+    key: m.id,
+    onClick: () => setSelectedId(m.id),
+    style: {
+      padding: "7px 8px",
+      borderBottom: `1px solid ${C.brd2}`,
+      cursor: "pointer",
+      background: selectedId === m.id ? C.bbg : C.card
+    }
+  }, e("div", {
+    style: { fontSize: 11, fontWeight: 600, color: selectedId === m.id ? C.blue : C.txt }
+  }, selectedId === m.id ? "● " : "○ ", m.name), e("div", {
+    style: { fontSize: 9, color: C.muted, marginTop: 2, lineHeight: 1.45 }
+  }, m.vendor || "업체 없음", " · 신규 ", m.newCode || "-", " · 기존 ", m.oldCode || "-"))) : e("div", {
+    style: { padding: 14, fontSize: 11, color: C.muted, textAlign: "center" }
+  }, "검색 결과가 없습니다."))), e("div", {
+    style: FBOX
+  }, e("b", {
+    style: { fontSize: 12 }
+  }, "② 업로드 정보와 기존 DB 정보 비교"), !selected ? e("div", {
+    style: { padding: "40px 10px", textAlign: "center", color: C.muted, fontSize: 11 }
+  }, "왼쪽에서 기존 원료를 선택하세요.") : e(React.Fragment, null, e("div", {
+    style: { display: "grid", gridTemplateColumns: "90px 1fr 1.25fr", gap: 6, marginTop: 9, alignItems: "center" }
+  }, e("div", null), e("div", {
+    style: { fontSize: 10, fontWeight: 600, color: C.blue }
+  }, "업로드 정보"), e("div", {
+    style: { fontSize: 10, fontWeight: 600, color: C.green }
+  }, "기존 DB 정보 (수정 가능)"), compareRows.flatMap(([label, uploaded, key]) => [
+    e("div", { key: key + "-l", style: { fontSize: 10, color: C.muted } }, label),
+    e("div", { key: key + "-u", style: { fontSize: 11, padding: "6px 7px", background: "#f6f8fb", borderRadius: 4, minHeight: 28, wordBreak: "break-word" } }, uploaded),
+    e("input", { key: key + "-d", style: { ...INP, width: "100%", fontSize: 11 }, value: form[key] ?? "", onChange: x => setForm({ ...form, [key]: x.target.value }) })
+  ]), e("div", {
+    style: { fontSize: 10, color: C.muted }
+  }, "구분"), e("div", {
+    style: { fontSize: 11, padding: "6px 7px", background: "#f6f8fb", borderRadius: 4 }
+  }, "-"), e("select", {
+    style: { ...INP, width: "100%", fontSize: 11 },
+    value: form.category,
+    onChange: x => setForm({ ...form, category: x.target.value })
+  }, MATERIAL_CATEGORIES.map(c => e("option", { key: c, value: c }, c)))), e("div", {
+    style: { marginTop: 10, padding: 8, background: "#fff8e1", border: "1px solid #f1df9b", borderRadius: 5, fontSize: 10, color: "#725d13", lineHeight: 1.5 }
+  }, "DB 정보를 수정하면 이 원료를 사용하는 기존 레시피와 원료 화면에도 변경된 이름·업체·코드가 적용됩니다.")))), e("div", {
+    style: { display: "flex", justifyContent: "space-between", gap: 6, marginTop: 12, flexWrap: "wrap" }
+  }, e("button", {
+    style: btn(),
+    onClick: onAuto
+  }, "자동 매칭으로 되돌리기"), e("div", {
+    style: { display: "flex", gap: 6 }
+  }, e("button", {
+    style: btn("p"),
+    disabled: !selected,
+    onClick: linkOnly
+  }, "선택 원료와 연결만"), e("button", {
+    style: btn("s"),
+    disabled: !selected,
+    onClick: saveAndLink
+  }, "DB 수정 후 연결"))))));
 }
 function IngEditor({
   matById,
@@ -2117,7 +2340,7 @@ function findManualMaterialConflict(materials, form) {
   const codes = [form.newCode, form.oldCode].map(normalizeMaterialCode).filter(Boolean);
   const sameVendor = materials.filter(m => vendorNamesMatch(form.vendor, m.vendor, m.vendorCode));
   const codeMatches = sameVendor.filter(m => {
-    const existingCodes = [m.newCode, m.oldCode].map(normalizeMaterialCode).filter(Boolean);
+    const existingCodes = [m.newCode, m.oldCode, m.oldCodeRaw].map(normalizeMaterialCode).filter(Boolean);
     return codes.some(code => existingCodes.includes(code));
   });
   const uniqueMatches = [...new Map(codeMatches.map(m => [m.id, m])).values()];
