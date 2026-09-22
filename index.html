@@ -1178,7 +1178,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.22.2"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.22.3"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -1840,14 +1840,25 @@ function RecipePage({
 function normImportValue(value) {
   return String(value ?? "").trim().toLowerCase().replace(/\s+/g, "");
 }
+function normVendorParts(value) {
+  const cleaned = String(value ?? "").trim().toLowerCase().replace(/[（]/g, "(").replace(/[）]/g, ")").replace(/㈜|\(주\)|주식회사|\(유\)|유한회사/g, "").replace(/\([^)]*\)/g, "");
+  return cleaned.split(/[\/,·]/).map(x => x.replace(/[^0-9a-z가-힣]/g, "")).filter(Boolean);
+}
+function vendorNamesMatch(inputVendor, storedVendor, storedVendorCode) {
+  const inputParts = normVendorParts(inputVendor);
+  const storedParts = normVendorParts(storedVendor);
+  if (inputParts.some(x => storedParts.includes(x))) return true;
+  const code = normImportValue(storedVendorCode).replace(/^k(?=[a-z])/i, "");
+  return !!code && inputParts.some(x => x === code);
+}
 function resolveImportedMaterial(ing, materials) {
-  const vendor = normImportValue(ing.vendor);
-  if (!vendor) return { status: "error", type: "vendor", material: null, message: "업체명을 입력하세요." };
-  const sameVendor = materials.filter(m => normImportValue(m.vendor) === vendor);
+  if (!normImportValue(ing.vendor)) return { status: "error", type: "vendor", material: null, message: "업체명을 입력하세요." };
+  const sameVendor = materials.filter(m => vendorNamesMatch(ing.vendor, m.vendor, m.vendorCode));
   const newCode = normImportValue(ing.newCode);
   const oldCode = normImportValue(ing.oldCode);
-  const newHits = newCode ? sameVendor.filter(m => normImportValue(m.newCode) === newCode) : [];
-  const oldHits = oldCode ? sameVendor.filter(m => normImportValue(m.oldCode) === oldCode || normImportValue(m.oldCodeRaw) === oldCode) : [];
+  const codeMatches = (m, code) => [m.newCode, m.oldCode, m.oldCodeRaw].some(value => normImportValue(value) === code);
+  const newHits = newCode ? sameVendor.filter(m => codeMatches(m, newCode)) : [];
+  const oldHits = oldCode ? sameVendor.filter(m => codeMatches(m, oldCode)) : [];
   if (newHits.length > 1 || oldHits.length > 1) return { status: "error", type: "duplicate_code", material: null, message: "같은 업체에서 동일 코드가 여러 원료에 등록되어 있습니다." };
   const newHit = newHits[0] || null;
   const oldHit = oldHits[0] || null;
@@ -1877,7 +1888,7 @@ function StandardRecipeImport({ draft, setDraft, st, upd, showToast, showConfirm
   const analyses = allIngs.map(ing => resolveImportedMaterial(ing, st.materials));
   const matchedCount = analyses.filter(x => x.status === "matched").length;
   const errorCount = analyses.filter(x => x.status === "error").length;
-  const newKeys = new Set(allIngs.filter((ing, i) => analyses[i].status === "new").map(ing => normImportValue(ing.vendor) + "|" + (normImportValue(ing.newCode) || normImportValue(ing.oldCode) || normImportValue(ing.name))));
+  const newKeys = new Set(allIngs.filter((ing, i) => analyses[i].status === "new").map(ing => normVendorParts(ing.vendor).join("/") + "|" + (normImportValue(ing.newCode) || normImportValue(ing.oldCode) || normImportValue(ing.name))));
   const updateRecipe = (ri, key, value) => setDraft(d => ({ ...d, recipes: d.recipes.map((r, i) => i === ri ? { ...r, [key]: value } : r) }));
   const updateIng = (ri, ii, key, value) => setDraft(d => ({ ...d, recipes: d.recipes.map((r, i) => i === ri ? { ...r, ings: r.ings.map((x, j) => j === ii ? { ...x, [key]: value } : x) } : r) }));
   const removeIng = (ri, ii) => setDraft(d => ({ ...d, recipes: d.recipes.map((r, i) => i === ri ? { ...r, ings: r.ings.filter((x, j) => j !== ii) } : r) }));
@@ -1907,7 +1918,7 @@ function StandardRecipeImport({ draft, setDraft, st, upd, showToast, showConfirm
             const result = resolveImportedMaterial(ing, s.materials);
             let material = result.material;
             if (result.status === "new") {
-              const vendor = s.vendors.find(v => normImportValue(v.name) === normImportValue(ing.vendor));
+              const vendor = s.vendors.find(v => vendorNamesMatch(ing.vendor, v.name, v.code));
               const id = nextMaterialId(s.materials);
               material = {
                 id,
@@ -2102,10 +2113,9 @@ function normalizeMaterialCode(value) {
   return String(value || "").trim().replace(/\s+/g, "").toUpperCase();
 }
 function findManualMaterialConflict(materials, form) {
-  const vendor = normalizeMaterialText(form.vendor);
   const name = normalizeMaterialText(form.name);
   const codes = [form.newCode, form.oldCode].map(normalizeMaterialCode).filter(Boolean);
-  const sameVendor = materials.filter(m => normalizeMaterialText(m.vendor) === vendor);
+  const sameVendor = materials.filter(m => vendorNamesMatch(form.vendor, m.vendor, m.vendorCode));
   const codeMatches = sameVendor.filter(m => {
     const existingCodes = [m.newCode, m.oldCode].map(normalizeMaterialCode).filter(Boolean);
     return codes.some(code => existingCodes.includes(code));
@@ -2119,7 +2129,7 @@ function findManualMaterialConflict(materials, form) {
 }
 function addManualMaterialInState(s, form, materialId) {
   const vendorName = form.vendor.trim();
-  let vendor = s.vendors.find(v => normalizeMaterialText(v.name) === normalizeMaterialText(vendorName));
+  let vendor = s.vendors.find(v => vendorNamesMatch(vendorName, v.name, v.code));
   if (!vendor) {
     vendor = {
       id: "VND_" + uid(),
@@ -2453,7 +2463,7 @@ function MatAddPanel({
   const save = () => {
     if (!form.name.trim()) return showToast("원료명을 입력하세요.");
     if (!form.vendor.trim()) return showToast("업체명을 입력하세요.");
-    const existingVendor = st.vendors.find(v => normalizeMaterialText(v.name) === normalizeMaterialText(form.vendor));
+    const existingVendor = st.vendors.find(v => vendorNamesMatch(form.vendor, v.name, v.code));
     if (existingVendor?.code && form.vendorCode.trim() && normalizeMaterialCode(existingVendor.code) !== normalizeMaterialCode(form.vendorCode)) {
       return showToast("동일 업체에 등록된 업체코드와 다릅니다. 업체코드를 확인하세요.");
     }
