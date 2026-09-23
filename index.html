@@ -1178,7 +1178,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.23.5"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.23.6"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -2335,6 +2335,16 @@ function normalizeMaterialText(value) {
 function normalizeMaterialCode(value) {
   return String(value || "").trim().replace(/\s+/g, "").toUpperCase();
 }
+function materialMatchesSearchQuery(material, query) {
+  const textQuery = normalizeMaterialText(query);
+  if (!textQuery) return true;
+  const textMatch = [material.name, material.vendor, material.vendorCode, materialCategory(material)]
+    .map(normalizeMaterialText).some(value => value.includes(textQuery));
+  const codeQuery = normalizeMaterialCode(query);
+  const codeMatch = [material.oldCode, material.oldCodeRaw, material.newCode]
+    .map(normalizeMaterialCode).some(value => value.includes(codeQuery));
+  return textMatch || codeMatch;
+}
 function findManualMaterialConflict(materials, form) {
   const name = normalizeMaterialText(form.name);
   const codes = [form.newCode, form.oldCode].map(normalizeMaterialCode).filter(Boolean);
@@ -2407,8 +2417,7 @@ function MaterialPage({
   const shortage = all.filter(m => !m.isWater && !m.isInno && getAvail(m) - (needs[m.id] || 0) < 0).length;
   const reqCnt = new Set(st.inReqs.filter(r => r.status !== "cancelled" && r.status !== "received").map(r => r.matId)).size;
   const filt = all.filter(m => {
-    const ql = q.toLowerCase();
-    if (ql && !m.name.toLowerCase().includes(ql) && !m.newCode.includes(ql) && !m.oldCode.includes(ql) && !m.vendor.toLowerCase().includes(ql) && !materialCategory(m).toLowerCase().includes(ql)) return false;
+    if (!materialMatchesSearchQuery(m, q)) return false;
     const avail = getAvail(m);
     const n = needs[m.id] || 0;
     const s = avail - n;
