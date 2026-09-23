@@ -167,15 +167,49 @@ function csvDownload(headers, rows, filename) {
     document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
   } catch(error) { console.error(error);alert("엑셀 다운로드에 실패했습니다: "+error.message); }
 }
+function normalizePlanAlternativeUses(value) {
+  const result = {};
+  Object.entries(value || {}).forEach(([sourceId, choices]) => {
+    const clean = {};
+    Object.entries(choices || {}).forEach(([targetId, qty]) => {
+      const amount = Math.max(0, Number(qty) || 0);
+      if (amount > 0 && targetId !== sourceId) clean[targetId] = amount;
+    });
+    if (Object.keys(clean).length) result[sourceId] = clean;
+  });
+  return result;
+}
+function getPlanMaterialNeeds(plan, recipes, qtyOverride) {
+  const needs = {};
+  const rcp = recipes.find(r => r.id === plan.recipeId);
+  if (!rcp) return needs;
+  const baseQty = Math.max(0, Number(plan.qty) || 0);
+  const qty = qtyOverride == null ? baseQty : Math.max(0, Number(qtyOverride) || 0);
+  rcp.ings.forEach(ing => {
+    if (!ing.matId) return;
+    needs[ing.matId] = (needs[ing.matId] || 0) + qty * (Number(ing.pct) || 0) / 100;
+  });
+  const scale = baseQty > 0 ? qty / baseQty : 0;
+  const alternatives = normalizePlanAlternativeUses(plan.alternativeUses);
+  Object.entries(alternatives).forEach(([sourceId, choices]) => {
+    let sourceRemaining = Math.max(0, needs[sourceId] || 0);
+    Object.entries(choices).forEach(([targetId, selectedQty]) => {
+      const moved = Math.min(sourceRemaining, selectedQty * scale);
+      if (moved <= 0) return;
+      needs[sourceId] = Math.max(0, (needs[sourceId] || 0) - moved);
+      needs[targetId] = (needs[targetId] || 0) + moved;
+      sourceRemaining -= moved;
+    });
+  });
+  return needs;
+}
 function calcNeeds(plans, recipes) {
   const needs = {};
-  for (const pl of plans) {
-    const rcp = recipes.find(r => r.id === pl.recipeId);
-    if (!rcp) continue;
-    for (const ing of rcp.ings) {
-      if (!ing.matId) continue;
-      needs[ing.matId] = (needs[ing.matId] || 0) + pl.qty * ing.pct / 100;
-    }
+  for (const plan of plans) {
+    const planNeeds = getPlanMaterialNeeds(plan, recipes);
+    Object.entries(planNeeds).forEach(([matId, qty]) => {
+      needs[matId] = (needs[matId] || 0) + qty;
+    });
   }
   return needs;
 }
@@ -1178,7 +1212,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.23.6"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.09.23.7"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -2308,6 +2342,19 @@ function replaceMaterialInState(s, sourceId, targetId) {
     if (!plan.stockDeductions || plan.stockDeductions[sourceId] == null) return;
     plan.stockDeductions[targetId] = (Number(plan.stockDeductions[targetId]) || 0) + (Number(plan.stockDeductions[sourceId]) || 0);
     delete plan.stockDeductions[sourceId];
+  });
+  s.plans.forEach(plan => {
+    const remapped = {};
+    Object.entries(plan.alternativeUses || {}).forEach(([fromId, choices]) => {
+      const nextFromId = fromId === sourceId ? targetId : fromId;
+      Object.entries(choices || {}).forEach(([toId, qty]) => {
+        const nextToId = toId === sourceId ? targetId : toId;
+        if (nextFromId === nextToId) return;
+        if (!remapped[nextFromId]) remapped[nextFromId] = {};
+        remapped[nextFromId][nextToId] = (Number(remapped[nextFromId][nextToId]) || 0) + (Number(qty) || 0);
+      });
+    });
+    plan.alternativeUses = normalizePlanAlternativeUses(remapped);
   });
   s.matGroups = (s.matGroups || []).map(group => ({ ...group, matIds: [...new Set(group.matIds.map(id => id === sourceId ? targetId : id))] })).filter(group => group.matIds.length > 1);
   s.materials.forEach(mat => {
@@ -3621,9 +3668,19 @@ function ProductionPage({
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [viewMode, setViewMode] = useState("short"); // short|all — 부족원료만 or 전체 소요원료
   const altChoice = draft.altChoice;
-  const setAltChoice = value => setDraft(prev => ({...prev, altChoice:typeof value === "function" ? value(prev.altChoice) : value}));
   const draftKey = JSON.stringify([form.recipeId, form.qty, form.date]);
   const appliedPlan = draft.applied?.key === draftKey ? st.plans.find(p => p.id === draft.applied.id && p.status === "plan") : null;
+  const setAltChoice = value => {
+    const next = typeof value === "function" ? value(altChoice) : value;
+    setDraft(prev => ({...prev, altChoice:next}));
+    if (appliedPlan) {
+      upd(s => {
+        const plan = s.plans.find(p => p.id === appliedPlan.id && p.status === "plan");
+        if (plan) plan.alternativeUses = normalizePlanAlternativeUses(next);
+        return s;
+      });
+    }
+  };
 
   const activePlans = st.plans.filter(p => p.status === "plan");
   const sortedRecipes = useMemo(() => st.recipes.filter(r => form.recipeId || !recipeQ || (r.name + " " + (r.code || "")).toLowerCase().includes(recipeQ.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name, "ko")), [st.recipes, recipeQ, form.recipeId]);
@@ -3639,10 +3696,7 @@ function ProductionPage({
   // 생산계획 추가 시 부족/전체 소요원료 계산
   const previewNeeds = useMemo(() => {
     if (!form.recipeId || !form.qty) return {};
-    const plans = [...activePlans.filter(p => p.id !== appliedPlan?.id).map(p => ({
-      recipeId: p.recipeId,
-      qty: p.qty
-    })), {
+    const plans = [...activePlans.filter(p => p.id !== appliedPlan?.id), {
       recipeId: form.recipeId,
       qty: parseInt(form.qty) || 0
     }];
@@ -3680,7 +3734,15 @@ function ProductionPage({
       showToast("생산량을 입력하세요.");
       return;
     }
-    if (appliedPlan) { showToast("이미 반영한 생산계획입니다."); return; }
+    if (appliedPlan) {
+      upd(s => {
+        const plan = s.plans.find(p => p.id === appliedPlan.id && p.status === "plan");
+        if (plan) plan.alternativeUses = normalizePlanAlternativeUses(altChoice);
+        return s;
+      });
+      showToast("대체원료 사용계획이 업데이트됐습니다.");
+      return;
+    }
     const planId = "PLN_" + uid();
     upd(s => {
       s.plans.push({
@@ -3691,7 +3753,8 @@ function ProductionPage({
         status: "plan",
         createdAt: td(),
         completedAt: null,
-        actualQty: null
+        actualQty: null,
+        alternativeUses: normalizePlanAlternativeUses(altChoice)
       });
       return s;
     });
@@ -3724,15 +3787,13 @@ function ProductionPage({
   const exportNeeds = () => csvDownload(["원료명","업체","가용재고(g)","계획소요(g)","부족량(g)"],
     display.map(r=>[r.m.name,r.m.vendor,Math.round(r.avail),Math.round(r.need),Math.max(0,Math.ceil(-r.short))]),"소요원료_"+td()+".csv");
   const applyDeduct = (p, s) => {
-    const rcp = s.recipes.find(r => r.id === p.recipeId);
-    if (!rcp) return;
     const qty = p.actualQty ?? p.qty;
     p.stockDeductions = {};
-    rcp.ings.forEach(ing => {
-      if (!ing.matId) return;
-      const m = s.materials.find(x => x.id === ing.matId);
+    const materialNeeds = getPlanMaterialNeeds(p, s.recipes, qty);
+    Object.entries(materialNeeds).forEach(([matId, required]) => {
+      const m = s.materials.find(x => x.id === matId);
       if (!m || m.isWater || m.isInno) return;
-      const deducted = Math.min(Math.max(0, m.stock), qty * ing.pct / 100);
+      const deducted = Math.min(Math.max(0, m.stock), required);
       p.stockDeductions[m.id] = (p.stockDeductions[m.id] || 0) + deducted;
       m.stock -= deducted;
     });
@@ -3742,14 +3803,12 @@ function ProductionPage({
       Object.entries(p.stockDeductions).forEach(([id, qty]) => { const m = s.materials.find(x => x.id === id); if (m) m.stock += qty; });
       return;
     }
-    const rcp = s.recipes.find(r => r.id === p.recipeId);
-    if (!rcp) return;
     const qty = p.stockDeductedQty ?? p.actualQty ?? p.qty;
-    rcp.ings.forEach(ing => {
-      if (!ing.matId) return;
-      const m = s.materials.find(x => x.id === ing.matId);
+    const materialNeeds = getPlanMaterialNeeds(p, s.recipes, qty);
+    Object.entries(materialNeeds).forEach(([matId, required]) => {
+      const m = s.materials.find(x => x.id === matId);
       if (!m || m.isWater || m.isInno) return;
-      m.stock += qty * ing.pct / 100;
+      m.stock += required;
     });
   };
   const plans = [...st.plans].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
