@@ -66,7 +66,30 @@ function persist(s) {
 const fmt = n => Math.round(Number(n) || 0).toLocaleString("ko-KR");
 const fmtG = n => fmt(n) + " g";
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-const td = () => new Date().toISOString().slice(0, 10);
+const td = () => {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+};
+function planProductionDate(plan) {
+  if (plan.productionDate) return plan.productionDate;
+  if (plan.status === "done") return plan.completedAt || plan.plannedDate || "";
+  return plan.plannedDate || plan.completedAt || "";
+}
+function normalizeProductionPlanDate(plan) {
+  const normalized = {...plan, productionDate:planProductionDate(plan)};
+  delete normalized.plannedDate;
+  delete normalized.completedAt;
+  return normalized;
+}
+function compareProductionPlans(a, b) {
+  const rank = status => status === "plan" ? 0 : status === "done" ? 1 : 2;
+  const rankDiff = rank(a.status) - rank(b.status);
+  if (rankDiff) return rankDiff;
+  const aDate = planProductionDate(a);
+  const bDate = planProductionDate(b);
+  if (a.status === "plan") return (aDate || "9999-12-31").localeCompare(bDate || "9999-12-31") || (b.createdAt || "").localeCompare(a.createdAt || "");
+  return (bDate || "").localeCompare(aDate || "") || (b.createdAt || "").localeCompare(a.createdAt || "");
+}
 const MATERIAL_CATEGORIES = ["베이스", "제형", "기능성", "방부·안정", "향료"];
 const MATERIAL_CATEGORY_ORDER = Object.fromEntries(MATERIAL_CATEGORIES.map((v, i) => [v, i]));
 function materialCategory(m) {
@@ -679,7 +702,7 @@ async function loadAllFromDB() {
     vendors,
     inReqs,
     inHist,
-    plans,
+    plans: plans.map(normalizeProductionPlanDate),
     matGroups
   };
 }
@@ -1212,7 +1235,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.09.23.7"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.10.07.1"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -3749,10 +3772,9 @@ function ProductionPage({
         id: planId,
         recipeId: form.recipeId,
         qty,
-        plannedDate: form.date,
+        productionDate: form.date,
         status: "plan",
         createdAt: td(),
-        completedAt: null,
         actualQty: null,
         alternativeUses: normalizePlanAlternativeUses(altChoice)
       });
@@ -3811,7 +3833,7 @@ function ProductionPage({
       m.stock += required;
     });
   };
-  const plans = [...st.plans].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  const plans = [...st.plans].sort(compareProductionPlans);
   const [editForm, setEditForm] = useState({});
   return /*#__PURE__*/React.createElement("div", {
     style: css.main
@@ -4137,11 +4159,11 @@ function ProductionPage({
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: btn(),
-    onClick: () => csvDownload(["제품명", "코드", "예정일", "계획량(g)", "실제생산량(g)", "완료일", "상태"], plans.map(p => {
+    onClick: () => csvDownload(["제품명", "코드", "생산일", "계획량(g)", "실제생산량(g)", "상태"], plans.map(p => {
       const r = rcpById(p.recipeId);
-      return [r?.name || "", r?.code || "", p.plannedDate || "", p.qty, p.actualQty ?? "", p.completedAt || "", p.status];
+      return [r?.name || "", r?.code || "", planProductionDate(p), p.qty, p.actualQty ?? "", p.status];
     }), "생산이력_" + td() + ".csv")
-  }, "⬇ 내보내기")), React.createElement("div", {style:{fontSize:11,color:C.muted,marginBottom:8}}, "실제생산량은 직접 입력하면 자동 저장됩니다. 완료 전 입력한 수량은 완료 처리 시 재고에 반영되며, 완료 후 수정은 실적만 변경합니다."), mode === "list" && (plans.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "⬇ 내보내기")), React.createElement("div", {style:{fontSize:11,color:C.muted,marginBottom:8}}, "생산일은 계획 단계에서는 예정 생산일이며, 완료 처리 시 실제 완료일로 바뀝니다. 수정 버튼에서 생산일을 변경할 수 있습니다."), mode === "list" && (plans.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 30,
       textAlign: "center",
@@ -4157,13 +4179,11 @@ function ProductionPage({
     style: TH
   }, "제품명"), /*#__PURE__*/React.createElement("th", {
     style: TH
-  }, "예정일"), /*#__PURE__*/React.createElement("th", {
+  }, "생산일"), /*#__PURE__*/React.createElement("th", {
     style: THR
   }, "계획량(g)"), /*#__PURE__*/React.createElement("th", {
     style: THR
   }, "실제생산량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "완료일"), /*#__PURE__*/React.createElement("th", {
     style: TH
   }, "상태"), /*#__PURE__*/React.createElement("th", {
     style: TH
@@ -4190,12 +4210,12 @@ function ProductionPage({
     }, isEdit ? /*#__PURE__*/React.createElement("input", {
       type: "date",
       style: DI,
-      value: editForm.plannedDate || "",
+      value: editForm.productionDate || "",
       onChange: e => setEditForm({
         ...editForm,
-        plannedDate: e.target.value
+        productionDate: e.target.value
       })
-    }) : p.plannedDate || "-"), /*#__PURE__*/React.createElement("td", {
+    }) : planProductionDate(p) || "-"), /*#__PURE__*/React.createElement("td", {
       style: TDR
     }, isEdit ? /*#__PURE__*/React.createElement(NumericInput, {
       style: NI,
@@ -4222,17 +4242,6 @@ function ProductionPage({
         if(value!==null && (!Number.isFinite(value)||value<0))return;
         upd(s=>{const x=s.plans.find(x=>x.id===p.id);if(x){if(x.status==="done" && x.stockDeductedQty==null)x.stockDeductedQty=x.actualQty??x.qty;x.actualQty=value;}return s;});
       }
-    })), /*#__PURE__*/React.createElement("td", {
-      style: TD
-    }, /*#__PURE__*/React.createElement("input", {
-      type: "date",
-      style: DI,
-      value: p.completedAt || "",
-      onChange: e => upd(s => {
-        const x = s.plans.find(x => x.id === p.id);
-        if (x) x.completedAt = e.target.value;
-        return s;
-      })
     })), /*#__PURE__*/React.createElement("td", {
       style: TD
     }, sBdg), /*#__PURE__*/React.createElement("td", {
@@ -4265,10 +4274,9 @@ function ProductionPage({
       onClick: () => {
         setEditId(p.id);
         setEditForm({
-          plannedDate: p.plannedDate || "",
+          productionDate: planProductionDate(p),
           qty: p.qty,
-          actualQty: p.actualQty ?? p.qty,
-          completedAt: p.completedAt || td()
+          actualQty: p.actualQty ?? p.qty
         });
       }
     }, "수정"), p.status === "plan" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
@@ -4280,7 +4288,7 @@ function ProductionPage({
           if (x) {
             x.status = "done";
             x.actualQty = qty;
-            x.completedAt = td();
+            x.productionDate = td();
             applyDeduct(x, s);
           }
           return s;
@@ -4296,7 +4304,7 @@ function ProductionPage({
           if (x) {
             x.status = "done";
             x.actualQty = qty;
-            x.completedAt = x.completedAt || td();
+            x.productionDate = td();
             x.stockDeductions = {};
           }
           return s;
@@ -4341,13 +4349,19 @@ function CalView({
   rcpById
 }) {
   const now = new Date();
-  const Y = now.getFullYear(),
-    M = now.getMonth();
+  const [cursor, setCursor] = useState(() => ({year:now.getFullYear(), month:now.getMonth()}));
+  const Y = cursor.year,
+    M = cursor.month;
+  const moveMonth = amount => setCursor(current => {
+    const next = new Date(current.year, current.month + amount, 1);
+    return {year:next.getFullYear(), month:next.getMonth()};
+  });
+  const goToday = () => setCursor({year:now.getFullYear(), month:now.getMonth()});
   const first = new Date(Y, M, 1).getDay();
   const last = new Date(Y, M + 1, 0).getDate();
   const byDay = {};
   plans.forEach(p => {
-    const ds = p.plannedDate || p.completedAt;
+    const ds = planProductionDate(p);
     if (!ds) return;
     const dm = ds.slice(0, 7),
       dd = parseInt(ds.slice(8));
@@ -4362,7 +4376,7 @@ function CalView({
   }));
   for (let d = 1; d <= last; d++) {
     const evs = byDay[d] || [];
-    const isT = d === now.getDate();
+    const isT = Y === now.getFullYear() && M === now.getMonth() && d === now.getDate();
     cells.push(React.createElement("div", {
       key: d,
       style: {
@@ -4383,9 +4397,11 @@ function CalView({
       }
     }, d), evs.map(p => {
       const r = rcpById(p.recipeId);
-      const kg = (p.qty / 1000).toFixed(1);
+      const shownQty = p.status === "done" ? (p.actualQty ?? p.qty) : p.qty;
+      const kg = (shownQty / 1000).toFixed(1);
       const bg = p.status === "done" ? C.gbg : p.status === "cancel" ? "#f5f4f0" : C.bbg;
       const cl = p.status === "done" ? C.green : p.status === "cancel" ? "#999" : C.blue;
+      const statusText = p.status === "done" ? "완료" : p.status === "cancel" ? "취소" : "계획";
       return React.createElement("div", {
         key: p.id,
         style: {
@@ -4408,15 +4424,20 @@ function CalView({
           fontSize: 9,
           opacity: 0.85
         }
-      }, kg + "kg"));
+      }, kg + "kg · " + statusText));
     })));
   }
   return React.createElement("div", null, React.createElement("div", {
     style: {
-      fontWeight: 600,
-      marginBottom: 8
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      marginBottom: 10
     }
-  }, Y + "년 " + (M + 1) + "월"), React.createElement("div", {
+  }, React.createElement("button", {style:btn(), onClick:()=>moveMonth(-1)}, "‹ 이전 달"), React.createElement("div", {
+    style:{fontWeight:700,fontSize:14}
+  }, Y + "년 " + (M + 1) + "월"), React.createElement("div", {style:{display:"flex",gap:5}}, React.createElement("button", {style:btn(), onClick:goToday}, "오늘"), React.createElement("button", {style:btn(), onClick:()=>moveMonth(1)}, "다음 달 ›"))), React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(7,1fr)",
@@ -5075,6 +5096,7 @@ function BackupDlg({
       }
       // matGroups 없으면 빈 배열 추가
       if (!parsed.matGroups) parsed.matGroups = [];
+      parsed.plans = (parsed.plans || []).map(normalizeProductionPlanDate);
       localStorage.setItem(LS, JSON.stringify(parsed));
       setSt(parsed);
       showToast("데이터가 복원됐습니다.");
