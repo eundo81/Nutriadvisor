@@ -280,6 +280,76 @@ function calcNeeds(plans, recipes) {
 function pendingQty(matId, inReqs) {
   return inReqs.filter(r => r.matId === matId && r.status !== "cancelled" && r.status !== "received").reduce((s, r) => s + (r.orderQty || r.requestQty || 0), 0);
 }
+function orderedIncomingQty(matId, inReqs) {
+  return (inReqs || []).filter(r => r.matId === matId && (r.status === "ordered" || r.status === "confirmed")).reduce((sum, r) => sum + (Number(r.orderQty) || Number(r.requestQty) || 0), 0);
+}
+function isProductionRequest(request) {
+  return request?.sourceType === "production" || !!request?.sourceDraft;
+}
+function reconcileProductionRequests(state, createMissing = false) {
+  const activePlans = (state.plans || []).filter(plan => plan.status === "plan");
+  const needs = calcNeeds(activePlans, state.recipes || []);
+  const materialIds = new Set([
+    ...Object.keys(needs),
+    ...(state.inReqs || []).filter(request => request.status === "requested" && isProductionRequest(request)).map(request => request.matId)
+  ]);
+  let created = 0;
+  let adjusted = 0;
+  let removed = 0;
+  materialIds.forEach(matId => {
+    const material = (state.materials || []).find(item => item.id === matId);
+    if (!material || material.isWater || material.isInno) return;
+    const need = Number(needs[matId]) || 0;
+    const committedAvailable = (Number(material.stock) || 0) + (Number(material.incoming) || 0) + orderedIncomingQty(matId, state.inReqs);
+    const shortage = Math.max(0, Math.ceil(need - committedAvailable));
+    const manualRequested = (state.inReqs || []).filter(request => request.matId === matId && request.status === "requested" && !isProductionRequest(request)).reduce((sum, request) => sum + (Number(request.requestQty) || 0), 0);
+    const targetRequest = Math.max(0, shortage - manualRequested);
+    const productionRequests = (state.inReqs || []).filter(request => request.matId === matId && request.status === "requested" && isProductionRequest(request));
+    if (targetRequest <= 0) {
+      if (productionRequests.length) {
+        const removeIds = new Set(productionRequests.map(request => request.id));
+        state.inReqs = state.inReqs.filter(request => !removeIds.has(request.id));
+        removed += productionRequests.length;
+      }
+      return;
+    }
+    const sourcePlanIds = activePlans.filter(plan => (getPlanMaterialNeeds(plan, state.recipes || [])[matId] || 0) > 0).map(plan => plan.id);
+    if (productionRequests.length) {
+      const keep = productionRequests[0];
+      keep.requestQty = targetRequest;
+      keep.shortageQty = shortage;
+      keep.planNeed = need;
+      keep.sourceType = "production";
+      keep.sourcePlanIds = sourcePlanIds;
+      keep.note = "생산계획 누적";
+      const duplicateIds = new Set(productionRequests.slice(1).map(request => request.id));
+      if (duplicateIds.size) {
+        state.inReqs = state.inReqs.filter(request => !duplicateIds.has(request.id));
+        removed += duplicateIds.size;
+      }
+      adjusted++;
+    } else if (createMissing) {
+      state.inReqs.push({
+        id: "REQ_" + uid(),
+        matId,
+        requestQty: targetRequest,
+        shortageQty: shortage,
+        planNeed: need,
+        sourceType: "production",
+        sourcePlanIds,
+        orderQty: 0,
+        status: "requested",
+        requestedAt: td(),
+        orderedAt: "",
+        expectedDate: "",
+        receivedAt: "",
+        note: "생산계획 누적"
+      });
+      created++;
+    }
+  });
+  return { created, adjusted, removed };
+}
 
 // ── 스타일 상수 ────────────────────────────────────────────
 const C = {
@@ -1282,7 +1352,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.10.08.1"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.10.08.2"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -3503,7 +3573,8 @@ function InOrderTab({
     const m = matById(r.matId);
     if (!m) return null;
     const on = needs[m.id] || 0;
-    const shortAmt = m.stock - on;
+    const available = (Number(m.stock) || 0) + (Number(m.incoming) || 0) + orderedIncomingQty(m.id, st.inReqs);
+    const shortAmt = available - on;
     return /*#__PURE__*/React.createElement("tr", {
       key: r.id
     }, /*#__PURE__*/React.createElement("td", {
@@ -3681,10 +3752,10 @@ function InHistTab({
 // ════════════════════════════════════════════════════════════
 // 4. 생산계획
 // ════════════════════════════════════════════════════════════
-function applyProductionAlternativeAvailability(rows, altChoice, materials, previewNeeds) {
+function applyProductionAlternativeAvailability(rows, altChoice, materials, previewNeeds, inReqs) {
   const remainingSpare = {};
   (materials || []).forEach(m => {
-    remainingSpare[m.id] = Math.max(0, (Number(m.stock) || 0) + (Number(m.incoming) || 0) - (Number(previewNeeds?.[m.id]) || 0));
+    remainingSpare[m.id] = Math.max(0, (Number(m.stock) || 0) + (Number(m.incoming) || 0) + orderedIncomingQty(m.id, inReqs) - (Number(previewNeeds?.[m.id]) || 0));
   });
   return rows.map(row => {
     const baseShort = row.short;
@@ -3780,7 +3851,7 @@ function ProductionPage({
       const m = matById(ing.matId);
       if (!m || m.isWater || m.isInno) return null;
       const need = previewNeeds[ing.matId] || 0;
-      const avail = m.stock + m.incoming;
+      const avail = (Number(m.stock) || 0) + (Number(m.incoming) || 0) + orderedIncomingQty(m.id, st.inReqs);
       const short = avail - need;
       return {
         m,
@@ -3790,8 +3861,8 @@ function ProductionPage({
         pct: ing.pct
       };
     }).filter(Boolean).sort((a, b) => a.short - b.short);
-  }, [form.recipeId, form.qty, previewNeeds, st.materials]);
-  const resolvedRows = useMemo(() => applyProductionAlternativeAvailability(previewRows, altChoice, st.materials, previewNeeds), [previewRows, altChoice, st.materials, previewNeeds]);
+  }, [form.recipeId, form.qty, previewNeeds, st.materials, st.inReqs]);
+  const resolvedRows = useMemo(() => applyProductionAlternativeAvailability(previewRows, altChoice, st.materials, previewNeeds, st.inReqs), [previewRows, altChoice, st.materials, previewNeeds, st.inReqs]);
   const shorts = resolvedRows.filter(r => r.short < 0);
   const display = viewMode === "short" ? shorts : resolvedRows;
   const addPlan = () => {
@@ -3831,26 +3902,20 @@ function ProductionPage({
     showToast("생산계획이 추가됐습니다.");
   };
   const requestShortages = () => {
-    const requestKey = JSON.stringify([draftKey, altChoice]);
-    if (draft.requestedKey === requestKey && st.inReqs.some(r => r.sourceDraft === requestKey && r.status !== "cancelled")) {
-      showToast("이미 등록한 입고 요청입니다.");
-      setPage("incoming");
-      return;
-    }
-    const requests = [];
-    const append = (matId, qty, need, note) => {
-      if (qty <= 0) return;
-      requests.push({id:"REQ_"+uid(),matId,requestQty:qty,shortageQty:qty,planNeed:need,sourceDraft:requestKey,
-        orderQty:0,status:"requested",requestedAt:td(),orderedAt:"",expectedDate:"",receivedAt:"",note});
-    };
-    shorts.forEach(({m,need,originalRequest,altRequests}) => {
-      append(m.id,Math.ceil(originalRequest),need,"생산계획");
-      altRequests.forEach(({matId,qty,need:altNeed})=>append(matId,Math.ceil(qty),altNeed,"대체원료("+m.name+")"));
+    if (!activePlans.length) { showToast("반영된 생산계획이 없습니다."); return; }
+    const hasShortage = st.materials.some(material => {
+      if (material.isWater || material.isInno) return false;
+      const need = calcNeeds(activePlans, st.recipes)[material.id] || 0;
+      const available = (Number(material.stock) || 0) + (Number(material.incoming) || 0) + orderedIncomingQty(material.id, st.inReqs);
+      return need > available;
     });
-    if (!requests.length) { showToast("입고 요청할 부족원료가 없습니다."); return; }
-    upd(s=>{s.inReqs.push(...requests);return s;});
-    setDraft(prev=>({...prev,requestedKey:requestKey}));
-    showToast(requests.length+"건 입고 요청이 등록됐습니다.");
+    if (!hasShortage) { showToast("입고 요청할 누적 부족원료가 없습니다."); return; }
+    upd(s => {
+      reconcileProductionRequests(s, true);
+      return s;
+    });
+    setDraft(prev=>({...prev,requestedKey:JSON.stringify(activePlans.map(plan=>plan.id).sort())}));
+    showToast("전체 생산계획의 누적 부족량을 입고 요청에 반영했습니다.");
     setPage("incoming");
   };
   const exportNeeds = () => csvDownload(["원료명","업체","가용재고(g)","계획소요(g)","부족량(g)"],
@@ -4048,7 +4113,7 @@ function ProductionPage({
     })
   })), /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:6,flexWrap:"wrap"}},
     React.createElement("button",{style:btn("p"),onClick:addPlan},appliedPlan?"✅ 생산계획 반영됨":"✅ 생산계획 반영"),
-    React.createElement("button",{style:btn("p"),disabled:!shorts.length,onClick:requestShortages},"📬 부족원료 입고요청"),
+    React.createElement("button",{style:btn("p"),disabled:!activePlans.length,onClick:requestShortages},"📬 누적 부족원료 입고요청"),
     React.createElement("button",{style:btn(),disabled:!previewRows.length,onClick:exportNeeds},"⬇ 내보내기"),
     React.createElement("button",{style:btn(),onClick:()=>setDraft({form:{recipeId:"",qty:"",date:""},recipeQ:"",altChoice:{},applied:null,requestedKey:null})},"새 계획 입력")
   )), form.recipeId && form.qty && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -4307,6 +4372,7 @@ function ProductionPage({
           if (x) {
             if (x.status === "done" && x.stockDeductedQty == null) x.stockDeductedQty = x.actualQty ?? x.qty;
             Object.assign(x, editForm);
+            if (x.status === "plan") reconcileProductionRequests(s, false);
           }
           return s;
         });
@@ -4360,13 +4426,16 @@ function ProductionPage({
       })
     }, "미차감 완료"), /*#__PURE__*/React.createElement("button", {
       style: btn(),
-      onClick: () => showConfirm("생산을 취소할까요?", () => {
+      onClick: () => showConfirm("생산을 취소할까요? 미발주 입고요청만 다시 계산하며, 발주완료·입고예정 건은 변경하지 않습니다.", () => {
         upd(s => {
           const x = s.plans.find(x => x.id === p.id);
-          if (x) x.status = "cancel";
+          if (x) {
+            x.status = "cancel";
+            reconcileProductionRequests(s, false);
+          }
           return s;
         });
-        showToast("취소됐습니다.");
+        showToast("생산계획을 취소하고 미발주 입고요청을 다시 계산했습니다.");
       })
     }, "취소")), p.status === "cancel" && /*#__PURE__*/React.createElement("button", {
       style: btn("s"),
@@ -4380,6 +4449,7 @@ function ProductionPage({
         upd(s => {
           if (p.status === "done") revertDeduct(p, s);
           s.plans = s.plans.filter(x => x.id !== p.id);
+          if (p.status === "plan") reconcileProductionRequests(s, false);
           return s;
         });
         setEditId(null);
