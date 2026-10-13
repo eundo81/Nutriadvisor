@@ -64,7 +64,10 @@ function persist(s) {
 
 // ── 유틸 ──────────────────────────────────────────────────
 const fmt = n => Math.round(Number(n) || 0).toLocaleString("ko-KR");
-const fmtG = n => fmt(n) + " g";
+const toKg = n => (Number(n) || 0) / 1000;
+const kgValue = n => Number(toKg(n).toFixed(2));
+const fmtKg = n => toKg(n).toLocaleString("ko-KR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtG = n => fmtKg(n) + " kg";
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 const td = () => {
   const d = new Date();
@@ -165,13 +168,15 @@ function NumericInput({
   onChange,
   onFocus,
   onBlur,
+  storedGrams = false,
   ...props
 }) {
+  const displayValue = storedGrams && value !== "" && value !== null && value !== undefined ? toKg(value).toFixed(2) : value;
   const focused = useRef(false);
-  const [text, setText] = useState(() => formatNumericText(value));
+  const [text, setText] = useState(() => formatNumericText(displayValue));
   useEffect(() => {
-    if (!focused.current) setText(formatNumericText(value));
-  }, [value]);
+    if (!focused.current) setText(formatNumericText(displayValue));
+  }, [displayValue]);
   return /*#__PURE__*/React.createElement("input", {
     ...props,
     type: "text",
@@ -190,13 +195,13 @@ function NumericInput({
       setText(formatNumericText(raw));
       if (onChange) onChange({
         target: {
-          value: raw
+          value: storedGrams && raw !== "" && raw !== "-" ? String((Number(raw) || 0) * 1000) : raw
         }
       });
     },
     onBlur: e => {
       focused.current = false;
-      setText(formatNumericText(value));
+      setText(formatNumericText(displayValue));
       if (onBlur) onBlur(e);
     }
   });
@@ -1384,7 +1389,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.10.13.1"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.10.13.2"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -2712,7 +2717,7 @@ function MaterialPage({
     onClick: () => setPage("stocktake")
   }, "📋 재고 실사"), /*#__PURE__*/React.createElement("button", {
     style: btn(),
-    onClick: () => csvDownload(["No.", "구분", "원료명", "업체", "신규코드", "기존코드", "현재재고(g)", "입고예정(g)", "가용재고(g)"], all.map((m, i) => [i + 1, materialCategory(m), m.name, m.vendor, m.newCode, m.oldCode, m.stock, getIncoming(m), getAvail(m)]), "원료재고_" + td() + ".csv")
+    onClick: () => csvDownload(["No.", "구분", "원료명", "업체", "신규코드", "기존코드", "현재재고(kg)", "입고예정(kg)", "가용재고(kg)"], all.map((m, i) => [i + 1, materialCategory(m), m.name, m.vendor, m.newCode, m.oldCode, kgValue(m.stock), kgValue(getIncoming(m)), kgValue(getAvail(m))]), "원료재고_" + td() + ".csv")
   }, "⬇ 내보내기"))), /*#__PURE__*/React.createElement("div", {
     style: css.mb
   }, /*#__PURE__*/React.createElement("div", {
@@ -2797,10 +2802,10 @@ function MaterialPage({
   /*#__PURE__*/React.createElement(SortableTh, { label: "기존코드", sortKey: "oldCode", sort: tableSort, onSort: toggleTableSort }),
   /*#__PURE__*/React.createElement(SortableTh, { label: "신규코드", sortKey: "newCode", sort: tableSort, onSort: toggleTableSort }),
   /*#__PURE__*/React.createElement(SortableTh, { label: "업체", sortKey: "vendor", sort: tableSort, onSort: toggleTableSort }),
-  /*#__PURE__*/React.createElement(SortableTh, { label: "현재재고(g)", sortKey: "stock", sort: tableSort, onSort: toggleTableSort, right: true }),
-  /*#__PURE__*/React.createElement(SortableTh, { label: "입고예정(g)", sortKey: "incoming", sort: tableSort, onSort: toggleTableSort, right: true }),
-  /*#__PURE__*/React.createElement(SortableTh, { label: "가용재고(g)", sortKey: "available", sort: tableSort, onSort: toggleTableSort, right: true }),
-  /*#__PURE__*/React.createElement(SortableTh, { label: "계획소요(g)", sortKey: "need", sort: tableSort, onSort: toggleTableSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "현재재고(kg)", sortKey: "stock", sort: tableSort, onSort: toggleTableSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "입고예정(kg)", sortKey: "incoming", sort: tableSort, onSort: toggleTableSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "가용재고(kg)", sortKey: "available", sort: tableSort, onSort: toggleTableSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "계획소요(kg)", sortKey: "need", sort: tableSort, onSort: toggleTableSort, right: true }),
   /*#__PURE__*/React.createElement(SortableTh, { label: "상태", sortKey: "status", sort: tableSort, onSort: toggleTableSort }), /*#__PURE__*/React.createElement("th", {
     style: TH
   }, "입고요청")), filt.map((m, index) => {
@@ -2814,7 +2819,7 @@ function MaterialPage({
       style: badge("gray")
     }, "자체");else if (short < 0) bdg = /*#__PURE__*/React.createElement("span", {
       style: badge("r")
-    }, "부족 ", fmt(Math.round(short)), "g");else bdg = /*#__PURE__*/React.createElement("span", {
+    }, "부족 ", fmtKg(Math.abs(short)), " kg");else bdg = /*#__PURE__*/React.createElement("span", {
       style: badge("g")
     }, "충분");
     return /*#__PURE__*/React.createElement("tr", {
@@ -2864,23 +2869,23 @@ function MaterialPage({
       }
     }, m.vendor), /*#__PURE__*/React.createElement("td", {
       style: TDR
-    }, m.isWater || m.isInno ? "자체" : fmt(m.stock)), /*#__PURE__*/React.createElement("td", {
+    }, m.isWater || m.isInno ? "자체" : fmtKg(m.stock)), /*#__PURE__*/React.createElement("td", {
       style: {
         ...TDR,
         color: C.blue
       }
-    }, m.isWater || m.isInno ? "-" : fmt(incomingAmt)), /*#__PURE__*/React.createElement("td", {
+    }, m.isWater || m.isInno ? "-" : fmtKg(incomingAmt)), /*#__PURE__*/React.createElement("td", {
       style: {
         ...TDR,
         color: short < 0 ? C.red : "inherit",
         fontWeight: short < 0 ? 600 : 400
       }
-    }, m.isWater || m.isInno ? "-" : fmt(avail)), /*#__PURE__*/React.createElement("td", {
+    }, m.isWater || m.isInno ? "-" : fmtKg(avail)), /*#__PURE__*/React.createElement("td", {
       style: {
         ...TDR,
         color: n > 0 ? C.blue : "inherit"
       }
-    }, n > 0 ? fmt(Math.round(n)) : "-"), /*#__PURE__*/React.createElement("td", {
+    }, n > 0 ? fmtKg(n) : "-"), /*#__PURE__*/React.createElement("td", {
       style: TD
     }, bdg), /*#__PURE__*/React.createElement("td", {
       style: TD
@@ -2938,7 +2943,7 @@ function MatAddPanel({
     showToast("원료가 추가됐습니다.");
     onSaved(addedId);
   };
-  const fields = [["원료명 *", "name", "text"], ["신규코드", "newCode", "text"], ["기존코드", "oldCode", "text"], ["업체명 *", "vendor", "text"], ["업체코드", "vendorCode", "text"], ["현재재고(g)", "stock", "number"], ["입고예정(g)", "incoming", "number"], ["규격·비고", "spec", "text"]];
+  const fields = [["원료명 *", "name", "text"], ["신규코드", "newCode", "text"], ["기존코드", "oldCode", "text"], ["업체명 *", "vendor", "text"], ["업체코드", "vendorCode", "text"], ["현재재고(kg)", "stock", "number"], ["입고예정(kg)", "incoming", "number"], ["규격·비고", "spec", "text"]];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       width: 320,
@@ -2983,6 +2988,7 @@ function MatAddPanel({
   }, /*#__PURE__*/React.createElement("div", {
     style: { fontSize: 10, color: C.muted, marginBottom: 3 }
   }, label), /*#__PURE__*/React.createElement(type === "number" ? NumericInput : "input", {
+    storedGrams: type === "number",
     type: type === "number" ? undefined : type,
     style: { ...INP, width: "100%", fontSize: 11 },
     value: form[key] ?? "",
@@ -3059,7 +3065,8 @@ function MatPanel({
     const req = st.inReqs.find(r => r.id === reqId);
     if (!req) return;
     const qty = req.orderQty || req.requestQty || 0;
-    showInput("입고 완료 처리", "실제 입고 수량(g)", qty, v => {
+    showInput("입고 완료 처리", "실제 입고 수량(kg)", toKg(qty).toFixed(2), enteredKg => {
+      const v = (Number(enteredKg) || 0) * 1000;
       upd(s => {
         const r = s.inReqs.find(x => x.id === reqId);
         const mat = s.materials.find(x => x.id === m.id);
@@ -3190,7 +3197,7 @@ function MatPanel({
   }, MATERIAL_CATEGORIES.map(c => /*#__PURE__*/React.createElement("option", {
     key: c,
     value: c
-  }, c)))), [["원료명", "name", "text"], ["신규코드", "newCode", "text"], ["기존코드", "oldCode", "text"], ["업체명", "vendor", "text"], ["현재재고(g)", "stock", "number"], ["입고예정(g)", "incoming", "number"]].map(([l, k, t]) => /*#__PURE__*/React.createElement("div", {
+  }, c)))), [["원료명", "name", "text"], ["신규코드", "newCode", "text"], ["기존코드", "oldCode", "text"], ["업체명", "vendor", "text"], ["현재재고(kg)", "stock", "number"], ["입고예정(kg)", "incoming", "number"]].map(([l, k, t]) => /*#__PURE__*/React.createElement("div", {
     key: k,
     style: {
       marginBottom: 8
@@ -3202,6 +3209,7 @@ function MatPanel({
       marginBottom: 3
     }
   }, l), /*#__PURE__*/React.createElement(t === "number" ? NumericInput : "input", {
+    storedGrams: t === "number",
     type: t === "number" ? undefined : t,
     style: {
       ...INP,
@@ -3210,7 +3218,7 @@ function MatPanel({
     value: form[k] ?? "",
     onChange: e => setForm({
       ...form,
-      [k]: t === "number" ? parseInt(e.target.value) || 0 : e.target.value
+      [k]: t === "number" ? Number(e.target.value) || 0 : e.target.value
     })
   }))), /*#__PURE__*/React.createElement("button", {
     style: {
@@ -3511,7 +3519,7 @@ function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
     showToast(targets.length + "건을 발주 관리로 이동했습니다.");
   };
   const e = React.createElement;
-  const headers = ["No.", "구분", "원료명", "업체", "기존코드", "신규코드", "현재재고(g)", "입고예정(g)", "계획소요(g)", "부족량(g)", "요청수량(g)"];
+  const headers = ["No.", "구분", "원료명", "업체", "기존코드", "신규코드", "현재재고(kg)", "입고예정(kg)", "계획소요(kg)", "부족량(kg)", "요청수량(kg)"];
   return e("div", null,
     e("div", {style:{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap", marginBottom:10}},
       e("span", {style:{fontSize:11,color:C.muted}}, "현재재고는 차감 전 실재고입니다. 생산계획에서 넘어온 계획소요·부족량은 요청 생성 시점 기준입니다."),
@@ -3519,13 +3527,13 @@ function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
       e("button", {style:btn("d"), disabled:!ids.length, onClick:()=>doDelete(ids)}, "선택 삭제"),
       e("button", {style:btn(), onClick:()=>csvDownload(headers, sortedReqs.map((r,i)=>{
         const {m,incoming,need,shortage}=metrics(r);
-        return [i+1,m?materialCategory(m):"",m?.name||"삭제된 원료",m?.vendor||"",m?.oldCode||"",m?.newCode||"",m?.stock||0,incoming,need,shortage,r.requestQty||0];
+        return [i+1,m?materialCategory(m):"",m?.name||"삭제된 원료",m?.vendor||"",m?.oldCode||"",m?.newCode||"",kgValue(m?.stock||0),kgValue(incoming),kgValue(need),kgValue(shortage),kgValue(r.requestQty||0)];
       }),"입고요청_"+td()+".csv")}, "⬇ 내보내기")),
     !reqs.length ? e("div",{style:{padding:30,textAlign:"center",color:C.muted}},"입고 요청 없음") :
     e("div",{style:{overflowX:"auto"}},e("table",{style:TBL},
       e("thead",null,e("tr",null,
         e("th",{style:TH},e("input",{type:"checkbox",checked:!!reqs.length && ids.length===reqs.length,"aria-label":"전체 선택",onChange:ev=>setSelected(ev.target.checked?reqs.map(r=>r.id):[])})),
-        ...[["No.","index"],["구분","category"],["원료명","name"],["업체","vendor"],["기존코드","oldCode"],["신규코드","newCode"],["현재재고(g)","stock"],["입고예정(g)","incoming"],["계획소요(g)","need"],["부족량(g)","shortage"],["요청수량(g)","requestQty"]].map(([label,key],i)=>e(SortableTh,{key,label,sortKey:key,sort:tableSort,onSort:toggleTableSort,right:i>=6})),
+        ...[["No.","index"],["구분","category"],["원료명","name"],["업체","vendor"],["기존코드","oldCode"],["신규코드","newCode"],["현재재고(kg)","stock"],["입고예정(kg)","incoming"],["계획소요(kg)","need"],["부족량(kg)","shortage"],["요청수량(kg)","requestQty"]].map(([label,key],i)=>e(SortableTh,{key,label,sortKey:key,sort:tableSort,onSort:toggleTableSort,right:i>=6})),
         e("th",{style:TH},"처리"))),
       e("tbody",null,sortedReqs.map((r,i)=>{
         const {m,incoming,need,shortage}=metrics(r);
@@ -3537,11 +3545,11 @@ function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
           e("td",{style:TD},m?.vendor||"-"),
           e("td",{style:{...TD,fontSize:10,color:C.muted}},m?.oldCode||"-"),
           e("td",{style:{...TD,fontSize:10,color:C.blue}},m?.newCode||"-"),
-          e("td",{style:TDR},fmt(m?.stock||0)),
-          e("td",{style:TDR},fmt(incoming)),
-          e("td",{style:TDR},fmt(Math.round(need))),
-          e("td",{style:{...TDR,color:shortage>0?C.red:C.muted}},fmt(Math.round(shortage))),
-          e("td",{style:TDR},e(NumericInput,{style:NI,value:r.requestQty??shortage,onChange:ev=>{
+          e("td",{style:TDR},fmtKg(m?.stock||0)),
+          e("td",{style:TDR},fmtKg(incoming)),
+          e("td",{style:TDR},fmtKg(need)),
+          e("td",{style:{...TDR,color:shortage>0?C.red:C.muted}},fmtKg(shortage)),
+          e("td",{style:TDR},e(NumericInput,{storedGrams:true,style:NI,value:r.requestQty??shortage,onChange:ev=>{
             const value=Number(ev.target.value);
             upd(s=>{const x=s.inReqs.find(x=>x.id===r.id);if(x)x.requestQty=Number.isFinite(value)?Math.max(0,value):0;return s;});
           }})),
@@ -3603,9 +3611,9 @@ function InOrderTab({
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: btn(),
-    onClick: () => csvDownload(["원료명", "업체", "요청수량(g)", "발주수량(g)", "입고예정일", "발주일", "상태"], sortedOrders.map(r => {
+    onClick: () => csvDownload(["원료명", "업체", "요청수량(kg)", "발주수량(kg)", "입고예정일", "발주일", "상태"], sortedOrders.map(r => {
       const m = matById(r.matId);
-      return [m?.name || "", m?.vendor || "", r.requestQty || 0, r.orderQty || 0, r.expectedDate || "", r.orderedAt || "", r.status];
+      return [m?.name || "", m?.vendor || "", kgValue(r.requestQty || 0), kgValue(r.orderQty || 0), r.expectedDate || "", r.orderedAt || "", r.status];
     }), "발주관리_" + td() + ".csv")
   }, "⬇ 내보내기")), orders.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3622,8 +3630,8 @@ function InOrderTab({
   }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null,
   /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:tableSort,onSort:toggleTableSort}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"부족량(g)",sortKey:"shortage",sort:tableSort,onSort:toggleTableSort,right:true}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"발주수량(g)",sortKey:"orderQty",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"부족량(kg)",sortKey:"shortage",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"발주수량(kg)",sortKey:"orderQty",sort:tableSort,onSort:toggleTableSort,right:true}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"입고예정일",sortKey:"expectedDate",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"발주일",sortKey:"orderedAt",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"상태",sortKey:"status",sort:tableSort,onSort:toggleTableSort}), /*#__PURE__*/React.createElement("th", {
@@ -3650,20 +3658,20 @@ function InOrderTab({
         color: shortAmt < 0 ? C.red : "inherit",
         fontWeight: shortAmt < 0 ? 600 : 400
       }
-    }, shortAmt < 0 ? fmt(Math.round(shortAmt)) : /*#__PURE__*/React.createElement("span", {
+    }, shortAmt < 0 ? fmtKg(Math.abs(shortAmt)) : /*#__PURE__*/React.createElement("span", {
       style: {
         color: C.green,
         fontSize: 10
       }
     }, "충분")), /*#__PURE__*/React.createElement("td", {
       style: TDR
-    }, /*#__PURE__*/React.createElement("input", {
-      type: "text",
+    }, /*#__PURE__*/React.createElement(NumericInput, {
+      storedGrams: true,
       style: NI,
-      value: (r.orderQty || r.requestQty || 0).toLocaleString("ko-KR"),
+      value: r.orderQty || r.requestQty || 0,
       onChange: e => upd(s => {
         const x = s.inReqs.find(x => x.id === r.id);
-        if (x) x.orderQty = parseInt(e.target.value.replace(/,/g,"")) || 0;
+        if (x) x.orderQty = Number(e.target.value) || 0;
         return s;
       })
     })), /*#__PURE__*/React.createElement("td", {
@@ -3736,9 +3744,9 @@ function InHistTab({
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: btn(),
-    onClick: () => csvDownload(["날짜", "원료명", "업체", "입고량(g)", "비고"], hist.map(h => {
+    onClick: () => csvDownload(["날짜", "원료명", "업체", "입고량(kg)", "비고"], hist.map(h => {
       const m = matById(h.matId);
-      return [h.date, m?.name || "", m?.vendor || "", h.qty, h.note || ""];
+      return [h.date, m?.name || "", m?.vendor || "", kgValue(h.qty), h.note || ""];
     }), "입고완료이력_" + td() + ".csv")
   }, "⬇ 내보내기")), hist.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3752,7 +3760,7 @@ function InHistTab({
   /*#__PURE__*/React.createElement(SortableTh, {label:"날짜",sortKey:"date",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:tableSort,onSort:toggleTableSort}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"입고량(g)",sortKey:"qty",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"입고량(kg)",sortKey:"qty",sort:tableSort,onSort:toggleTableSort,right:true}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"비고",sortKey:"note",sort:tableSort,onSort:toggleTableSort}), /*#__PURE__*/React.createElement("th", {
     style: TH
   }, "액션")), hist.map(h => {
@@ -3944,7 +3952,7 @@ function ProductionPage({
     if (!form.recipeId || !form.qty) return {};
     const plans = [...activePlans.filter(p => p.id !== appliedPlan?.id), {
       recipeId: form.recipeId,
-      qty: parseInt(form.qty) || 0
+      qty: Number(form.qty) || 0
     }];
     return calcNeeds(plans, st.recipes);
   }, [form.recipeId, form.qty, form.date, st.plans, st.recipes, appliedPlan?.id]);
@@ -3983,7 +3991,7 @@ function ProductionPage({
       showToast("레시피를 선택하세요.");
       return;
     }
-    const qty = parseInt(form.qty) || 0;
+    const qty = Number(form.qty) || 0;
     if (!qty) {
       showToast("생산량을 입력하세요.");
       return;
@@ -4031,8 +4039,8 @@ function ProductionPage({
     showToast("전체 생산계획의 누적 부족량을 입고 요청에 반영했습니다.");
     setPage("incoming");
   };
-  const exportNeeds = () => csvDownload(["원료명","업체","가용재고(g)","계획소요(g)","부족량(g)"],
-    sortedDisplay.map(r=>[r.m.name,r.m.vendor,Math.round(r.avail),Math.round(r.need),Math.max(0,Math.ceil(-r.short))]),"소요원료_"+td()+".csv");
+  const exportNeeds = () => csvDownload(["원료명","업체","가용재고(kg)","계획소요(kg)","부족량(kg)"],
+    sortedDisplay.map(r=>[r.m.name,r.m.vendor,kgValue(r.avail),kgValue(r.need),kgValue(Math.max(0,-r.short))]),"소요원료_"+td()+".csv");
   const applyDeduct = (p, s) => {
     const qty = p.actualQty ?? p.qty;
     p.stockDeductions = {};
@@ -4081,13 +4089,13 @@ function ProductionPage({
   }, /*#__PURE__*/React.createElement("button", {
     style: stab(tab === "add"),
     onClick: () => setTab("add")
-  }, "생산 계획"), /*#__PURE__*/React.createElement("button", {
+  }, "생산계획 입력"), /*#__PURE__*/React.createElement("button", {
     style: stab(tab === "needs"),
     onClick: () => setTab("needs")
   }, "원료 소요 현황"), /*#__PURE__*/React.createElement("button", {
     style: stab(tab === "hist"),
     onClick: () => setTab("hist")
-  }, "생산 실적"), /*#__PURE__*/React.createElement("button", {
+  }, "생산 계획"), /*#__PURE__*/React.createElement("button", {
     style: stab(tab === "cal"),
     onClick: () => setTab("cal")
   }, "생산 달력")), /*#__PURE__*/React.createElement("div", {
@@ -4201,17 +4209,17 @@ function ProductionPage({
     style: FROW
   }, /*#__PURE__*/React.createElement("span", {
     style: FLBL
-  }, "생산량"), /*#__PURE__*/React.createElement("input", {
-    type: "text",
+  }, "생산량"), /*#__PURE__*/React.createElement(NumericInput, {
+    storedGrams: true,
     style: {
       ...INP,
       maxWidth: 160
     },
-    placeholder: "예: 200,000",
-    value: form.qty ? parseInt(form.qty).toLocaleString() : "",
+    placeholder: "예: 200.00",
+    value: form.qty || "",
     onChange: e => setForm({
       ...form,
-      qty: e.target.value.replace(/,/g, "")
+      qty: e.target.value
     })
   }), /*#__PURE__*/React.createElement("span", {
     style: {
@@ -4219,7 +4227,7 @@ function ProductionPage({
       color: C.muted,
       flexShrink: 0
     }
-  }, "g")), /*#__PURE__*/React.createElement("div", {
+  }, "kg")), /*#__PURE__*/React.createElement("div", {
     style: FROW
   }, /*#__PURE__*/React.createElement("span", {
     style: FLBL
@@ -4251,9 +4259,9 @@ function ProductionPage({
   }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null,
   /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:previewSort,onSort:togglePreviewSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:previewSort,onSort:togglePreviewSort}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"가용재고(g)",sortKey:"avail",sort:previewSort,onSort:togglePreviewSort,right:true}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"필요량(g)",sortKey:"need",sort:previewSort,onSort:togglePreviewSort,right:true}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"부족량(g)",sortKey:"short",sort:previewSort,onSort:togglePreviewSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"가용재고(kg)",sortKey:"avail",sort:previewSort,onSort:togglePreviewSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"필요량(kg)",sortKey:"need",sort:previewSort,onSort:togglePreviewSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"부족량(kg)",sortKey:"short",sort:previewSort,onSort:togglePreviewSort,right:true}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"대체원료",sortKey:"alternatives",sort:previewSort,onSort:togglePreviewSort})), display.length === 0 ? /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
     colSpan: 6,
     style: {
@@ -4332,7 +4340,8 @@ function ProductionPage({
         color: C.muted,
         marginRight: 4
       }
-    }, fmt((Number(a.stock)||0)+(Number(a.incoming)||0)) + "g 가용"), altChoice[m.id] && altChoice[m.id][a.id] !== undefined && React.createElement(NumericInput, {
+    }, fmtKg((Number(a.stock)||0)+(Number(a.incoming)||0)) + " kg 가용"), altChoice[m.id] && altChoice[m.id][a.id] !== undefined && React.createElement(NumericInput, {
+      storedGrams: true,
       style: {
         width: 70,
         padding: "1px 4px",
@@ -4348,7 +4357,7 @@ function ProductionPage({
           ...altChoice,
           [m.id]: {
             ...cur,
-            [a.id]: parseInt(e.target.value) || 0
+            [a.id]: Number(e.target.value) || 0
           }
         });
       }
@@ -4357,7 +4366,7 @@ function ProductionPage({
         fontSize: 9,
         color: C.muted
       }
-    }, "g"))))), /*#__PURE__*/React.createElement("td", {
+    }, "kg"))))), /*#__PURE__*/React.createElement("td", {
       style: {
         ...TD,
         color: C.muted,
@@ -4365,15 +4374,15 @@ function ProductionPage({
       }
     }, m.vendor), /*#__PURE__*/React.createElement("td", {
       style: TDR
-    }, fmt(Math.round(avail))), /*#__PURE__*/React.createElement("td", {
+    }, fmtKg(avail)), /*#__PURE__*/React.createElement("td", {
       style: TDR
-    }, fmt(Math.round(need))), /*#__PURE__*/React.createElement("td", {
+    }, fmtKg(need)), /*#__PURE__*/React.createElement("td", {
       style: {
         ...TDR,
         color: short < 0 ? C.red : C.green,
         fontWeight: 600
       }
-    }, short < 0 ? fmt(Math.round(short)) : "충분"), /*#__PURE__*/React.createElement("td", {
+    }, short < 0 ? fmtKg(short) : "충분"), /*#__PURE__*/React.createElement("td", {
       style: TD
     }, alts.length > 0 && /*#__PURE__*/React.createElement("span", {
       style: badge(short < 0 && altStock > 0 ? "b" : "gray")
@@ -4382,8 +4391,8 @@ function ProductionPage({
     /*#__PURE__*/React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 } },
       /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: C.muted } }, "미완료 생산계획 ", activePlans.length, "건의 원료 소요량입니다. 입고예정에는 발주완료·입고예정 수량이 포함됩니다."),
       /*#__PURE__*/React.createElement("button", { style: btn(), onClick: () => csvDownload(
-        ["No.", "구분", "원료명", "업체", "기존코드", "신규코드", "사용제품", "제품코드", "현재재고(g)", "입고예정(g)", "가용재고(g)", "계획소요(g)", "부족량(g)"],
-        sortedActiveMaterialRows.map((row, index) => [index + 1, row.category, row.material.name, row.material.vendor, row.material.oldCode || "", row.material.newCode || "", row.productNames, row.productCodes, row.currentStock, row.plannedIncoming, row.available, row.need, row.shortage]),
+        ["No.", "구분", "원료명", "업체", "기존코드", "신규코드", "사용제품", "제품코드", "현재재고(kg)", "입고예정(kg)", "가용재고(kg)", "계획소요(kg)", "부족량(kg)"],
+        sortedActiveMaterialRows.map((row, index) => [index + 1, row.category, row.material.name, row.material.vendor, row.material.oldCode || "", row.material.newCode || "", row.productNames, row.productCodes, kgValue(row.currentStock), kgValue(row.plannedIncoming), kgValue(row.available), kgValue(row.need), kgValue(row.shortage)]),
         "미완료생산계획_원료소요_" + td() + ".xlsx"
       ) }, "⬇ 엑셀 다운로드")
     ),
@@ -4398,11 +4407,11 @@ function ProductionPage({
         /*#__PURE__*/React.createElement(SortableTh, { label: "신규코드", sortKey: "newCode", sort: needSort, onSort: toggleNeedSort }),
         /*#__PURE__*/React.createElement(SortableTh, { label: "사용제품", sortKey: "productNames", sort: needSort, onSort: toggleNeedSort }),
         /*#__PURE__*/React.createElement(SortableTh, { label: "제품코드", sortKey: "productCodes", sort: needSort, onSort: toggleNeedSort }),
-        /*#__PURE__*/React.createElement(SortableTh, { label: "현재재고(g)", sortKey: "currentStock", sort: needSort, onSort: toggleNeedSort, right: true }),
-        /*#__PURE__*/React.createElement(SortableTh, { label: "입고예정(g)", sortKey: "plannedIncoming", sort: needSort, onSort: toggleNeedSort, right: true }),
-        /*#__PURE__*/React.createElement(SortableTh, { label: "가용재고(g)", sortKey: "available", sort: needSort, onSort: toggleNeedSort, right: true }),
-        /*#__PURE__*/React.createElement(SortableTh, { label: "계획소요(g)", sortKey: "need", sort: needSort, onSort: toggleNeedSort, right: true }),
-        /*#__PURE__*/React.createElement(SortableTh, { label: "부족량(g)", sortKey: "shortage", sort: needSort, onSort: toggleNeedSort, right: true })
+        /*#__PURE__*/React.createElement(SortableTh, { label: "현재재고(kg)", sortKey: "currentStock", sort: needSort, onSort: toggleNeedSort, right: true }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "입고예정(kg)", sortKey: "plannedIncoming", sort: needSort, onSort: toggleNeedSort, right: true }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "가용재고(kg)", sortKey: "available", sort: needSort, onSort: toggleNeedSort, right: true }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "계획소요(kg)", sortKey: "need", sort: needSort, onSort: toggleNeedSort, right: true }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "부족량(kg)", sortKey: "shortage", sort: needSort, onSort: toggleNeedSort, right: true })
       )),
       /*#__PURE__*/React.createElement("tbody", null, sortedActiveMaterialRows.map((row, index) => /*#__PURE__*/React.createElement("tr", { key: row.material.id },
         /*#__PURE__*/React.createElement("td", { style: { ...TD, color: C.muted, textAlign: "center" } }, index + 1),
@@ -4413,11 +4422,11 @@ function ProductionPage({
         /*#__PURE__*/React.createElement("td", { style: { ...TD, color: C.blue, fontSize: 10 } }, row.material.newCode || "-"),
         /*#__PURE__*/React.createElement("td", { style: { ...TD, fontSize: 10, whiteSpace: "normal" } }, row.productNames || "-"),
         /*#__PURE__*/React.createElement("td", { style: { ...TD, fontSize: 10, whiteSpace: "normal" } }, row.productCodes || "-"),
-        /*#__PURE__*/React.createElement("td", { style: TDR }, fmt(row.currentStock)),
-        /*#__PURE__*/React.createElement("td", { style: { ...TDR, color: C.blue } }, fmt(row.plannedIncoming)),
-        /*#__PURE__*/React.createElement("td", { style: TDR }, fmt(row.available)),
-        /*#__PURE__*/React.createElement("td", { style: TDR }, fmt(Math.round(row.need))),
-        /*#__PURE__*/React.createElement("td", { style: { ...TDR, color: row.shortage > 0 ? C.red : C.green, fontWeight: 600 } }, row.shortage > 0 ? fmt(Math.ceil(row.shortage)) : "충분")
+        /*#__PURE__*/React.createElement("td", { style: TDR }, fmtKg(row.currentStock)),
+        /*#__PURE__*/React.createElement("td", { style: { ...TDR, color: C.blue } }, fmtKg(row.plannedIncoming)),
+        /*#__PURE__*/React.createElement("td", { style: TDR }, fmtKg(row.available)),
+        /*#__PURE__*/React.createElement("td", { style: TDR }, fmtKg(row.need)),
+        /*#__PURE__*/React.createElement("td", { style: { ...TDR, color: row.shortage > 0 ? C.red : C.green, fontWeight: 600 } }, row.shortage > 0 ? fmtKg(row.shortage) : "충분")
       )))
     ))
   ), tab === "hist" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -4430,9 +4439,9 @@ function ProductionPage({
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: btn(),
-    onClick: () => csvDownload(["제품명", "코드", "생산일", "계획량(g)", "실제생산량(g)", "상태"], plans.map(p => {
+    onClick: () => csvDownload(["제품명", "코드", "생산일", "계획량(kg)", "실제생산량(kg)", "상태"], plans.map(p => {
       const r = rcpById(p.recipeId);
-      return [r?.name || "", r?.code || "", planProductionDate(p), p.qty, p.actualQty ?? "", p.status];
+      return [r?.name || "", r?.code || "", planProductionDate(p), kgValue(p.qty), p.actualQty == null ? "" : kgValue(p.actualQty), p.status];
     }), "생산이력_" + td() + ".csv")
   }, "⬇ 내보내기")), React.createElement("div", {style:{fontSize:11,color:C.muted,marginBottom:8}}, "생산일은 계획 단계에서는 예정 생산일이며, 완료 처리 시 실제 완료일로 바뀝니다. 수정 버튼에서 생산일을 변경할 수 있습니다."), mode === "list" && (plans.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
@@ -4450,8 +4459,8 @@ function ProductionPage({
   /*#__PURE__*/React.createElement(SortableTh, { label: "제품명", sortKey: "product", sort: planSort, onSort: togglePlanSort }),
   /*#__PURE__*/React.createElement(SortableTh, { label: "제품코드", sortKey: "code", sort: planSort, onSort: togglePlanSort }),
   /*#__PURE__*/React.createElement(SortableTh, { label: "생산일", sortKey: "productionDate", sort: planSort, onSort: togglePlanSort }),
-  /*#__PURE__*/React.createElement(SortableTh, { label: "계획량(g)", sortKey: "qty", sort: planSort, onSort: togglePlanSort, right: true }),
-  /*#__PURE__*/React.createElement(SortableTh, { label: "실제생산량(g)", sortKey: "actualQty", sort: planSort, onSort: togglePlanSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "계획량(kg)", sortKey: "qty", sort: planSort, onSort: togglePlanSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "실제생산량(kg)", sortKey: "actualQty", sort: planSort, onSort: togglePlanSort, right: true }),
   /*#__PURE__*/React.createElement(SortableTh, { label: "상태", sortKey: "status", sort: planSort, onSort: togglePlanSort }), /*#__PURE__*/React.createElement("th", {
     style: TH
   }, "액션")), plans.map(p => {
@@ -4487,22 +4496,25 @@ function ProductionPage({
     }) : planProductionDate(p) || "-"), /*#__PURE__*/React.createElement("td", {
       style: TDR
     }, isEdit ? /*#__PURE__*/React.createElement(NumericInput, {
+      storedGrams: true,
       style: NI,
       value: editForm.qty || 0,
       onChange: e => setEditForm({
         ...editForm,
-        qty: parseInt(e.target.value) || 0
+        qty: Number(e.target.value) || 0
       })
     }) : fmtG(p.qty)), /*#__PURE__*/React.createElement("td", {
       style: TDR
     }, isEdit ? /*#__PURE__*/React.createElement(NumericInput, {
+      storedGrams: true,
       style: NI,
       value: editForm.actualQty ?? p.qty,
       onChange: e => setEditForm({
         ...editForm,
-        actualQty: parseInt(e.target.value) || 0
+        actualQty: Number(e.target.value) || 0
       })
     }) : /*#__PURE__*/React.createElement(NumericInput, {
+      storedGrams: true,
       style: NI,
       value: p.actualQty ?? "",
       placeholder: "실제생산량",
@@ -4672,7 +4684,7 @@ function CalView({
     }, d), evs.map(p => {
       const r = rcpById(p.recipeId);
       const shownQty = p.status === "done" ? (p.actualQty ?? p.qty) : p.qty;
-      const kg = (shownQty / 1000).toFixed(1);
+      const kg = toKg(shownQty).toFixed(2);
       const bg = p.status === "done" ? C.gbg : p.status === "cancel" ? "#f5f4f0" : C.bbg;
       const cl = p.status === "done" ? C.green : p.status === "cancel" ? "#999" : C.blue;
       const statusText = p.status === "done" ? "완료" : p.status === "cancel" ? "취소" : "계획";
@@ -4698,7 +4710,7 @@ function CalView({
           fontSize: 9,
           opacity: 0.85
         }
-      }, kg + "kg · " + statusText));
+      }, kg + " kg · " + statusText));
     })));
   }
   return React.createElement("div", null, React.createElement("div", {
@@ -4794,7 +4806,7 @@ function StocktakePage({
     showToast("재고·입고예정 변경사항을 저장 요청했습니다.");
   };
   const downloadForm = () => {
-    csvDownload(["No.", "구분", "원료명", "업체", "신규코드", "현재재고(g)", "입고예정(g)", "비고"], shown.map((m, i) => [i + 1, materialCategory(m), m.name, m.vendor, m.newCode || "", m.stock, m.incoming || 0, ""]), "재고실사양식_" + td() + ".csv");
+    csvDownload(["No.", "구분", "원료명", "업체", "신규코드", "현재재고(kg)", "입고예정(kg)", "비고"], shown.map((m, i) => [i + 1, materialCategory(m), m.name, m.vendor, m.newCode || "", kgValue(m.stock), kgValue(m.incoming || 0), ""]), "재고실사양식_" + td() + ".csv");
   };
   const parsePaste = () => {
     const lines = pasteText.trim().split("\n");
@@ -4808,8 +4820,10 @@ function StocktakePage({
     lines.forEach(line => {
       const cols = line.split("\t");
       const name = (cols[2] || "").trim();
-      const stockVal = (cols[5] || "").trim().replace(/,/g, "");
-      const incomingVal = (cols[6] || "").trim().replace(/,/g, "");
+      const stockKg = (cols[5] || "").trim().replace(/,/g, "");
+      const incomingKg = (cols[6] || "").trim().replace(/,/g, "");
+      const stockVal = stockKg === "" ? "" : String((Number(stockKg) || 0) * 1000);
+      const incomingVal = incomingKg === "" ? "" : String((Number(incomingKg) || 0) * 1000);
       if (!name || (stockVal === "" && incomingVal === "")) return;
       const m = st.materials.find(x => x.name === name);
       if (m) {
@@ -4933,8 +4947,8 @@ function StocktakePage({
   /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"신규코드",sortKey:"newCode",sort:tableSort,onSort:toggleTableSort}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"현재재고(g)",sortKey:"stock",sort:tableSort,onSort:toggleTableSort,right:true}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"입고예정(g)",sortKey:"incoming",sort:tableSort,onSort:toggleTableSort,right:true})), shown.map((m, index) => /*#__PURE__*/React.createElement("tr", {
+  /*#__PURE__*/React.createElement(SortableTh, {label:"현재재고(kg)",sortKey:"stock",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"입고예정(kg)",sortKey:"incoming",sort:tableSort,onSort:toggleTableSort,right:true})), shown.map((m, index) => /*#__PURE__*/React.createElement("tr", {
     key: m.id,
     style: {
       background: dirty[m.id + ".stock"] || dirty[m.id + ".incoming"] ? "#eff4ff" : ""
@@ -4970,6 +4984,7 @@ function StocktakePage({
   }, m.newCode || "-"), /*#__PURE__*/React.createElement("td", {
     style: TDR
   }, /*#__PURE__*/React.createElement(NumericInput, {
+    storedGrams: true,
     style: {
       ...NI,
       width: 110
@@ -4991,6 +5006,7 @@ function StocktakePage({
   })), /*#__PURE__*/React.createElement("td", {
     style: TDR
   }, /*#__PURE__*/React.createElement(NumericInput, {
+    storedGrams: true,
     style: {
       ...NI,
       width: 110
@@ -5233,7 +5249,7 @@ function GroupPage({
   /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"신규코드",sortKey:"newCode",sort:tableSort,onSort:toggleTableSort}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"현재재고(g)",sortKey:"stock",sort:tableSort,onSort:toggleTableSort,right:true}), /*#__PURE__*/React.createElement("th", {
+  /*#__PURE__*/React.createElement(SortableTh, {label:"현재재고(kg)",sortKey:"stock",sort:tableSort,onSort:toggleTableSort,right:true}), /*#__PURE__*/React.createElement("th", {
     style: TH
   })), groupMaterials.map(m => {
     const id = m.id;
@@ -5255,7 +5271,7 @@ function GroupPage({
       }
     }, m.newCode || "-"), /*#__PURE__*/React.createElement("td", {
       style: TDR
-    }, fmt(m.stock)), /*#__PURE__*/React.createElement("td", {
+    }, fmtKg(m.stock)), /*#__PURE__*/React.createElement("td", {
       style: TD
     }, /*#__PURE__*/React.createElement("button", {
       style: btn("d"),
@@ -5315,7 +5331,7 @@ function GroupPage({
       color: C.blue,
       fontSize: 10
     }
-  }, fmt(m.stock), "g"))))))), !sg && mode !== "add" && /*#__PURE__*/React.createElement("div", {
+  }, fmtKg(m.stock), " kg"))))))), !sg && mode !== "add" && /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 40,
       textAlign: "center",
@@ -5661,7 +5677,7 @@ function VendorPage({
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: btn(),
-    onClick: () => csvDownload(["원료명", "신규코드", "기존코드", "현재재고(g)"], vendorMaterials.map(m => [m.name || "", m.newCode || "", m.oldCode || "", m.stock || 0]), sv.name + "_원료목록.csv")
+    onClick: () => csvDownload(["원료명", "신규코드", "기존코드", "현재재고(kg)"], vendorMaterials.map(m => [m.name || "", m.newCode || "", m.oldCode || "", kgValue(m.stock || 0)]), sv.name + "_원료목록.csv")
   }, "⬇ 다운로드"), /*#__PURE__*/React.createElement("button", {
     style: btn("p"),
     onClick: () => {
@@ -5669,10 +5685,10 @@ function VendorPage({
       st.vendors.sort((a, b) => a.name.localeCompare(b.name, "ko")).forEach(v => {
         v.matIds.forEach(id => {
           const m = matById(id);
-          if (m) rows.push([v.name, v.code || "", m.name, m.newCode || "", m.oldCode || "", m.stock || 0]);
+          if (m) rows.push([v.name, v.code || "", m.name, m.newCode || "", m.oldCode || "", kgValue(m.stock || 0)]);
         });
       });
-      csvDownload(["업체명", "업체코드", "원료명", "신규코드", "기존코드", "현재재고(g)"], rows, "전체업체_원료목록.csv");
+      csvDownload(["업체명", "업체코드", "원료명", "신규코드", "기존코드", "현재재고(kg)"], rows, "전체업체_원료목록.csv");
     }
   }, "⬇ 전체 다운로드"))), /*#__PURE__*/React.createElement("div", {
     style: css.mb
@@ -5682,7 +5698,7 @@ function VendorPage({
   /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"신규코드",sortKey:"newCode",sort:tableSort,onSort:toggleTableSort}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"기존코드",sortKey:"oldCode",sort:tableSort,onSort:toggleTableSort}),
-  /*#__PURE__*/React.createElement(SortableTh, {label:"현재재고(g)",sortKey:"stock",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"현재재고(kg)",sortKey:"stock",sort:tableSort,onSort:toggleTableSort,right:true}),
   /*#__PURE__*/React.createElement(SortableTh, {label:"상태",sortKey:"status",sort:tableSort,onSort:toggleTableSort})), vendorMaterials.map(m => {
     const id = m.id;
     return /*#__PURE__*/React.createElement("tr", {
@@ -5716,7 +5732,7 @@ function VendorPage({
       }
     }, m.oldCode), /*#__PURE__*/React.createElement("td", {
       style: TDR
-    }, fmt(m.stock)), /*#__PURE__*/React.createElement("td", {
+    }, fmtKg(m.stock)), /*#__PURE__*/React.createElement("td", {
       style: TD
     }, /*#__PURE__*/React.createElement("span", {
       style: badge(m.stock > 0 ? "g" : "r")
