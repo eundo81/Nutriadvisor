@@ -71,14 +71,16 @@ const td = () => {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 };
 function planProductionDate(plan) {
-  if (plan.productionDate) return plan.productionDate;
-  if (plan.status === "done") return plan.completedAt || plan.plannedDate || "";
-  return plan.plannedDate || plan.completedAt || "";
+  const raw = plan.status === "done"
+    ? plan.actualProductionDate || plan.completedAt || plan.productionDate || plan.plannedDate || ""
+    : plan.productionDate || plan.plannedDate || plan.completedAt || "";
+  return raw ? String(raw).slice(0, 10) : "";
 }
 function normalizeProductionPlanDate(plan) {
   const normalized = {...plan, productionDate:planProductionDate(plan)};
   delete normalized.plannedDate;
   delete normalized.completedAt;
+  delete normalized.actualProductionDate;
   return normalized;
 }
 const INNO_MATERIAL_ID = "MAT004";
@@ -198,6 +200,36 @@ function NumericInput({
       if (onBlur) onBlur(e);
     }
   });
+}
+function useTableSort(defaultKey, defaultDirection = "asc") {
+  const [sort, setSort] = useState({ key: defaultKey, direction: defaultDirection });
+  const toggleSort = key => setSort(current => current.key === key ? { key, direction: current.direction === "asc" ? "desc" : "asc" } : { key, direction: "asc" });
+  return [sort, toggleSort];
+}
+function sortTableRows(rows, sort, accessors) {
+  const accessor = accessors?.[sort.key];
+  if (!accessor) return [...rows];
+  const direction = sort.direction === "desc" ? -1 : 1;
+  return rows.map((row, index) => ({ row, index })).sort((a, b) => {
+    const av = accessor(a.row);
+    const bv = accessor(b.row);
+    const an = typeof av === "number" ? av : Number.NaN;
+    const bn = typeof bv === "number" ? bv : Number.NaN;
+    let compared;
+    if (Number.isFinite(an) && Number.isFinite(bn)) compared = an - bn;
+    else compared = String(av ?? "").localeCompare(String(bv ?? ""), "ko", { numeric: true, sensitivity: "base" });
+    return compared ? compared * direction : a.index - b.index;
+  }).map(item => item.row);
+}
+function SortableTh({ label, sortKey, sort, onSort, right = false }) {
+  const active = sort?.key === sortKey;
+  return /*#__PURE__*/React.createElement("th", {
+    style: { ...(right ? THR : TH), cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" },
+    onClick: () => onSort(sortKey),
+    title: label + " 기준 정렬"
+  }, label, /*#__PURE__*/React.createElement("span", {
+    style: { marginLeft: 4, color: active ? C.blue : "#bbb", fontSize: 9 }
+  }, active ? sort.direction === "asc" ? "▲" : "▼" : "↕"));
 }
 function excelBytes(headers, rows) {
   const esc = v => String(v ?? "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -1352,7 +1384,7 @@ function App({
     style: css.logo
   }, "🧪 뉴트리어드바이저"), React.createElement("span", {
     style: {fontSize:9, color:"rgba(255,255,255,.4)", marginLeft:4}
-  }, "v2026.10.08.2"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
+  }, "v2026.10.13.1"), userRole === "admin" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 9,
       background: "rgba(255,255,255,.15)",
@@ -1518,7 +1550,16 @@ function RecipePage({
   const [newIngs, setNewIngs] = useState([]);
   const importFileRef = useRef(null);
   const [importDraft, setImportDraft] = useState(null);
+  const [ingSort, toggleIngSort] = useTableSort("name", "asc");
   const rcp = sel ? rcpById(sel) : null;
+  const sortedRecipeIngs = rcp ? sortTableRows(rcp.ings, ingSort, {
+    name: ing => matById(ing.matId)?.name || ing.nameRaw || "",
+    vendor: ing => matById(ing.matId)?.vendor || "",
+    oldCode: ing => matById(ing.matId)?.oldCode || "",
+    newCode: ing => matById(ing.matId)?.newCode || "",
+    pct: ing => Number(ing.pct) || 0,
+    note: ing => ing.note || ""
+  }) : [];
   const filt = st.recipes.filter(r => {
     const ql = q.trim().toLowerCase();
     if (!ql) return true;
@@ -1804,7 +1845,7 @@ function RecipePage({
     style: btn(),
     onClick: () => {
       const hdrs = ["No.", "원료명", "업체", "기존코드", "신규코드", "함량%", "비고"];
-      const rows = rcp.ings.map((ing, i) => {
+      const rows = sortedRecipeIngs.map((ing, i) => {
         const m = matById(ing.matId);
         return [i + 1, m ? m.name : ing.nameRaw || "?", m ? m.vendor : "", m ? m.oldCode : "", m ? m.newCode : "", ing.pct, ing.note || ""];
       });
@@ -1831,19 +1872,13 @@ function RecipePage({
     style: TBL
   }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
     style: TH
-  }, "No."), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "원료명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "업체"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "기존코드"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "신규코드"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "함량%"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "비고")), rcp.ings.map((ing, i) => {
+  }, "No."),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:ingSort,onSort:toggleIngSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:ingSort,onSort:toggleIngSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"기존코드",sortKey:"oldCode",sort:ingSort,onSort:toggleIngSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"신규코드",sortKey:"newCode",sort:ingSort,onSort:toggleIngSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"함량%",sortKey:"pct",sort:ingSort,onSort:toggleIngSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"비고",sortKey:"note",sort:ingSort,onSort:toggleIngSort})), sortedRecipeIngs.map((ing, i) => {
     const m = matById(ing.matId);
     return /*#__PURE__*/React.createElement("tr", {
       key: i
@@ -2598,12 +2633,13 @@ function MaterialPage({
   const [lowDays, setLowDays] = useState(30);
   const [selMat, setSelMat] = useState(null);
   const [adding, setAdding] = useState(false);
+  const [tableSort, toggleTableSort] = useTableSort("category", "asc");
   const all = st.materials.filter(m => !m.isInnoChild).sort(compareMaterials);
   const getIncoming = m => (m.incoming || 0) + st.inReqs.filter(r => r.matId === m.id && (r.status === "ordered" || r.status === "confirmed") && !r.receivedAt).reduce((s, r) => s + (r.orderQty || 0), 0);
   const getAvail = m => m.stock + getIncoming(m);
   const shortage = all.filter(m => !m.isWater && !m.isInno && getAvail(m) - (needs[m.id] || 0) < 0).length;
   const reqCnt = new Set(st.inReqs.filter(r => r.status !== "cancelled" && r.status !== "received").map(r => r.matId)).size;
-  const filt = all.filter(m => {
+  const filteredMaterials = all.filter(m => {
     if (!materialMatchesSearchQuery(m, q)) return false;
     const avail = getAvail(m);
     const n = needs[m.id] || 0;
@@ -2613,6 +2649,18 @@ function MaterialPage({
     if (filter === "ok") return s >= 0;
     if (filter === "req") return st.inReqs.some(r => r.matId === m.id && r.status !== "cancelled" && r.status !== "received");
     return true;
+  });
+  const filt = sortTableRows(filteredMaterials, tableSort, {
+    category: m => materialCategory(m),
+    name: m => m.name,
+    oldCode: m => m.oldCode,
+    newCode: m => m.newCode,
+    vendor: m => m.vendor,
+    stock: m => Number(m.stock) || 0,
+    incoming: m => getIncoming(m),
+    available: m => getAvail(m),
+    need: m => Number(needs[m.id]) || 0,
+    status: m => getAvail(m) - (Number(needs[m.id]) || 0)
   });
   const doRequest = matId => {
     upd(s => {
@@ -2743,27 +2791,17 @@ function MaterialPage({
     style: TBL
   }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
     style: TH
-  }, "No."), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "구분"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "원료명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "기존코드"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "신규코드"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "업체"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "현재재고(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "입고예정(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "가용재고(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "계획소요(g)"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "상태"), /*#__PURE__*/React.createElement("th", {
+  }, "No."),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "구분", sortKey: "category", sort: tableSort, onSort: toggleTableSort }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "원료명", sortKey: "name", sort: tableSort, onSort: toggleTableSort }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "기존코드", sortKey: "oldCode", sort: tableSort, onSort: toggleTableSort }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "신규코드", sortKey: "newCode", sort: tableSort, onSort: toggleTableSort }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "업체", sortKey: "vendor", sort: tableSort, onSort: toggleTableSort }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "현재재고(g)", sortKey: "stock", sort: tableSort, onSort: toggleTableSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "입고예정(g)", sortKey: "incoming", sort: tableSort, onSort: toggleTableSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "가용재고(g)", sortKey: "available", sort: tableSort, onSort: toggleTableSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "계획소요(g)", sortKey: "need", sort: tableSort, onSort: toggleTableSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "상태", sortKey: "status", sort: tableSort, onSort: toggleTableSort }), /*#__PURE__*/React.createElement("th", {
     style: TH
   }, "입고요청")), filt.map((m, index) => {
     const n = needs[m.id] || 0;
@@ -3424,6 +3462,7 @@ function IncomingPage({
 }
 function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
   const [selected, setSelected] = useState([]);
+  const [tableSort, toggleTableSort] = useTableSort("requestedAt", "desc");
   const reqs = st.inReqs.filter(r => r.status === "requested");
   const ids = reqs.filter(r => selected.includes(r.id)).map(r => r.id);
   const metrics = r => {
@@ -3433,6 +3472,20 @@ function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
     const shortage = r.shortageQty ?? Math.max(0, need - (m?.stock || 0) - incoming);
     return {m, incoming, need, shortage};
   };
+  const sortedReqs = sortTableRows(reqs, tableSort, {
+    index: r => reqs.indexOf(r),
+    category: r => materialCategory(metrics(r).m || {}),
+    name: r => metrics(r).m?.name || "",
+    vendor: r => metrics(r).m?.vendor || "",
+    oldCode: r => metrics(r).m?.oldCode || "",
+    newCode: r => metrics(r).m?.newCode || "",
+    stock: r => Number(metrics(r).m?.stock) || 0,
+    incoming: r => metrics(r).incoming,
+    need: r => metrics(r).need,
+    shortage: r => metrics(r).shortage,
+    requestQty: r => Number(r.requestQty) || 0,
+    requestedAt: r => r.requestedAt || ""
+  });
   const doDelete = targetIds => showConfirm(targetIds.length + "건의 입고 요청을 삭제할까요?", () => {
     upd(s => { s.inReqs = s.inReqs.filter(r => !targetIds.includes(r.id) || r.status !== "requested"); return s; });
     setSelected(prev => prev.filter(id => !targetIds.includes(id)));
@@ -3464,7 +3517,7 @@ function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
       e("span", {style:{fontSize:11,color:C.muted}}, "현재재고는 차감 전 실재고입니다. 생산계획에서 넘어온 계획소요·부족량은 요청 생성 시점 기준입니다."),
       e("button", {style:btn("s"), disabled:!ids.length, onClick:()=>doOrder(ids)}, "선택 발주요청 (" + ids.length + ")"),
       e("button", {style:btn("d"), disabled:!ids.length, onClick:()=>doDelete(ids)}, "선택 삭제"),
-      e("button", {style:btn(), onClick:()=>csvDownload(headers, reqs.map((r,i)=>{
+      e("button", {style:btn(), onClick:()=>csvDownload(headers, sortedReqs.map((r,i)=>{
         const {m,incoming,need,shortage}=metrics(r);
         return [i+1,m?materialCategory(m):"",m?.name||"삭제된 원료",m?.vendor||"",m?.oldCode||"",m?.newCode||"",m?.stock||0,incoming,need,shortage,r.requestQty||0];
       }),"입고요청_"+td()+".csv")}, "⬇ 내보내기")),
@@ -3472,9 +3525,9 @@ function InReqTab({st, upd, matById, needs, showToast, showConfirm}) {
     e("div",{style:{overflowX:"auto"}},e("table",{style:TBL},
       e("thead",null,e("tr",null,
         e("th",{style:TH},e("input",{type:"checkbox",checked:!!reqs.length && ids.length===reqs.length,"aria-label":"전체 선택",onChange:ev=>setSelected(ev.target.checked?reqs.map(r=>r.id):[])})),
-        ...headers.map((label,i)=>e("th",{key:label,style:i>=6?THR:TH},label)),
+        ...[["No.","index"],["구분","category"],["원료명","name"],["업체","vendor"],["기존코드","oldCode"],["신규코드","newCode"],["현재재고(g)","stock"],["입고예정(g)","incoming"],["계획소요(g)","need"],["부족량(g)","shortage"],["요청수량(g)","requestQty"]].map(([label,key],i)=>e(SortableTh,{key,label,sortKey:key,sort:tableSort,onSort:toggleTableSort,right:i>=6})),
         e("th",{style:TH},"처리"))),
-      e("tbody",null,reqs.map((r,i)=>{
+      e("tbody",null,sortedReqs.map((r,i)=>{
         const {m,incoming,need,shortage}=metrics(r);
         return e("tr",{key:r.id},
           e("td",{style:TD},e("input",{type:"checkbox",checked:selected.includes(r.id),"aria-label":(m?.name||"원료")+" 선택",onChange:ev=>setSelected(prev=>ev.target.checked?[...prev,r.id]:prev.filter(id=>id!==r.id))})),
@@ -3505,7 +3558,20 @@ function InOrderTab({
   showToast,
   showConfirm
 }) {
+  const [tableSort, toggleTableSort] = useTableSort("expectedDate", "asc");
   const orders = st.inReqs.filter(r => r.status === "ordered" || r.status === "confirmed");
+  const sortedOrders = sortTableRows(orders, tableSort, {
+    name: r => matById(r.matId)?.name || "",
+    vendor: r => matById(r.matId)?.vendor || "",
+    shortage: r => {
+      const m = matById(r.matId);
+      return m ? (Number(m.stock) || 0) + (Number(m.incoming) || 0) + orderedIncomingQty(m.id, st.inReqs) - (Number(needs[m.id]) || 0) : 0;
+    },
+    orderQty: r => Number(r.orderQty || r.requestQty) || 0,
+    expectedDate: r => r.expectedDate || "9999-12-31",
+    orderedAt: r => r.orderedAt || "",
+    status: r => r.status
+  });
   const doReceive = id => {
     const r = st.inReqs.find(x => x.id === id);
     if (!r) return;
@@ -3537,7 +3603,7 @@ function InOrderTab({
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: btn(),
-    onClick: () => csvDownload(["원료명", "업체", "요청수량(g)", "발주수량(g)", "입고예정일", "발주일", "상태"], orders.map(r => {
+    onClick: () => csvDownload(["원료명", "업체", "요청수량(g)", "발주수량(g)", "입고예정일", "발주일", "상태"], sortedOrders.map(r => {
       const m = matById(r.matId);
       return [m?.name || "", m?.vendor || "", r.requestQty || 0, r.orderQty || 0, r.expectedDate || "", r.orderedAt || "", r.status];
     }), "발주관리_" + td() + ".csv")
@@ -3553,23 +3619,16 @@ function InOrderTab({
     }
   }, /*#__PURE__*/React.createElement("table", {
     style: TBL
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null,
+  /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"부족량(g)",sortKey:"shortage",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"발주수량(g)",sortKey:"orderQty",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"입고예정일",sortKey:"expectedDate",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"발주일",sortKey:"orderedAt",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"상태",sortKey:"status",sort:tableSort,onSort:toggleTableSort}), /*#__PURE__*/React.createElement("th", {
     style: TH
-  }, "원료명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "업체"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "부족량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "발주수량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "입고예정일"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "발주일"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "상태"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "액션")), orders.map(r => {
+  }, "액션")), sortedOrders.map(r => {
     const m = matById(r.matId);
     if (!m) return null;
     const on = needs[m.id] || 0;
@@ -3661,7 +3720,14 @@ function InHistTab({
   showToast,
   showConfirmHist
 }) {
-  const hist = [...st.inHist].sort((a, b) => b.date.localeCompare(a.date));
+  const [tableSort, toggleTableSort] = useTableSort("date", "desc");
+  const hist = sortTableRows(st.inHist, tableSort, {
+    date: h => h.date || "",
+    name: h => matById(h.matId)?.name || "",
+    vendor: h => matById(h.matId)?.vendor || "",
+    qty: h => Number(h.qty) || 0,
+    note: h => h.note || ""
+  });
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -3682,17 +3748,12 @@ function InHistTab({
     }
   }, "이력 없음") : /*#__PURE__*/React.createElement("table", {
     style: TBL
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "날짜"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "원료명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "업체"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "입고량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "비고"), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null,
+  /*#__PURE__*/React.createElement(SortableTh, {label:"날짜",sortKey:"date",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"입고량(g)",sortKey:"qty",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"비고",sortKey:"note",sort:tableSort,onSort:toggleTableSort}), /*#__PURE__*/React.createElement("th", {
     style: TH
   }, "액션")), hist.map(h => {
     const m = matById(h.matId);
@@ -3808,6 +3869,9 @@ function ProductionPage({
   const setRecipeQ = value => setDraft(prev => ({...prev, recipeQ:value}));
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [viewMode, setViewMode] = useState("short"); // short|all — 부족원료만 or 전체 소요원료
+  const [previewSort, togglePreviewSort] = useTableSort("short", "asc");
+  const [needSort, toggleNeedSort] = useTableSort("shortage", "desc");
+  const [planSort, togglePlanSort] = useTableSort("__default", "asc");
   const altChoice = draft.altChoice;
   const draftKey = JSON.stringify([form.recipeId, form.qty, form.date]);
   const appliedPlan = draft.applied?.key === draftKey ? st.plans.find(p => p.id === draft.applied.id && p.status === "plan") : null;
@@ -3824,6 +3888,47 @@ function ProductionPage({
   };
 
   const activePlans = st.plans.filter(p => p.status === "plan");
+  const activeMaterialRows = useMemo(() => {
+    const totalNeeds = calcNeeds(activePlans, st.recipes);
+    return Object.entries(totalNeeds).map(([matId, need]) => {
+      const material = st.materials.find(item => item.id === matId);
+      if (!material || material.isWater || material.isInno) return null;
+      const plannedIncoming = (Number(material.incoming) || 0) + orderedIncomingQty(matId, st.inReqs);
+      const currentStock = Number(material.stock) || 0;
+      const available = currentStock + plannedIncoming;
+      const products = activePlans.filter(plan => (getPlanMaterialNeeds(plan, st.recipes)[matId] || 0) > 0).map(plan => {
+        const recipe = st.recipes.find(item => item.id === plan.recipeId);
+        return { name: recipe?.name || "", code: recipe?.code || "", date: planProductionDate(plan) };
+      });
+      const productCodes = [...new Set(products.map(product => product.code).filter(Boolean))];
+      const productNames = [...new Set(products.map(product => product.name).filter(Boolean))];
+      return {
+        material,
+        category: materialCategory(material),
+        currentStock,
+        plannedIncoming,
+        available,
+        need: Number(need) || 0,
+        shortage: Math.max(0, (Number(need) || 0) - available),
+        productCodes: productCodes.join(", "),
+        productNames: productNames.join(", ")
+      };
+    }).filter(Boolean);
+  }, [activePlans, st.recipes, st.materials, st.inReqs]);
+  const sortedActiveMaterialRows = sortTableRows(activeMaterialRows, needSort, {
+    category: row => row.category,
+    name: row => row.material.name,
+    vendor: row => row.material.vendor,
+    oldCode: row => row.material.oldCode,
+    newCode: row => row.material.newCode,
+    productNames: row => row.productNames,
+    productCodes: row => row.productCodes,
+    currentStock: row => row.currentStock,
+    plannedIncoming: row => row.plannedIncoming,
+    available: row => row.available,
+    need: row => row.need,
+    shortage: row => row.shortage
+  });
   const sortedRecipes = useMemo(() => st.recipes.filter(r => form.recipeId || !recipeQ || (r.name + " " + (r.code || "")).toLowerCase().includes(recipeQ.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name, "ko")), [st.recipes, recipeQ, form.recipeId]);
   const selectRecipe = r => {
     setForm({
@@ -3865,6 +3970,14 @@ function ProductionPage({
   const resolvedRows = useMemo(() => applyProductionAlternativeAvailability(previewRows, altChoice, st.materials, previewNeeds, st.inReqs), [previewRows, altChoice, st.materials, previewNeeds, st.inReqs]);
   const shorts = resolvedRows.filter(r => r.short < 0);
   const display = viewMode === "short" ? shorts : resolvedRows;
+  const sortedDisplay = sortTableRows(display, previewSort, {
+    name: row => row.m.name,
+    vendor: row => row.m.vendor,
+    avail: row => row.avail,
+    need: row => row.need,
+    short: row => row.short,
+    alternatives: row => (st.matGroups || []).find(group => group.matIds.includes(row.m.id))?.matIds.length || 0
+  });
   const addPlan = () => {
     if (!form.recipeId) {
       showToast("레시피를 선택하세요.");
@@ -3919,7 +4032,7 @@ function ProductionPage({
     setPage("incoming");
   };
   const exportNeeds = () => csvDownload(["원료명","업체","가용재고(g)","계획소요(g)","부족량(g)"],
-    display.map(r=>[r.m.name,r.m.vendor,Math.round(r.avail),Math.round(r.need),Math.max(0,Math.ceil(-r.short))]),"소요원료_"+td()+".csv");
+    sortedDisplay.map(r=>[r.m.name,r.m.vendor,Math.round(r.avail),Math.round(r.need),Math.max(0,Math.ceil(-r.short))]),"소요원료_"+td()+".csv");
   const applyDeduct = (p, s) => {
     const qty = p.actualQty ?? p.qty;
     p.stockDeductions = {};
@@ -3945,7 +4058,14 @@ function ProductionPage({
       m.stock += required;
     });
   };
-  const plans = [...st.plans].sort(compareProductionPlans);
+  const plans = planSort.key === "__default" ? [...st.plans].sort(compareProductionPlans) : sortTableRows(st.plans, planSort, {
+    product: plan => rcpById(plan.recipeId)?.name || "",
+    code: plan => rcpById(plan.recipeId)?.code || "",
+    productionDate: plan => planProductionDate(plan),
+    qty: plan => Number(plan.qty) || 0,
+    actualQty: plan => Number(plan.actualQty) || 0,
+    status: plan => plan.status === "plan" ? 0 : plan.status === "done" ? 1 : 2
+  });
   const [editForm, setEditForm] = useState({});
   return /*#__PURE__*/React.createElement("div", {
     style: css.main
@@ -3962,6 +4082,9 @@ function ProductionPage({
     style: stab(tab === "add"),
     onClick: () => setTab("add")
   }, "생산 계획"), /*#__PURE__*/React.createElement("button", {
+    style: stab(tab === "needs"),
+    onClick: () => setTab("needs")
+  }, "원료 소요 현황"), /*#__PURE__*/React.createElement("button", {
     style: stab(tab === "hist"),
     onClick: () => setTab("hist")
   }, "생산 실적"), /*#__PURE__*/React.createElement("button", {
@@ -4125,26 +4248,20 @@ function ProductionPage({
     }
   }, /*#__PURE__*/React.createElement("table", {
     style: TBL
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "원료명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "업체"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "가용재고(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "필요량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "부족량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "대체원료")), display.length === 0 ? /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null,
+  /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:previewSort,onSort:togglePreviewSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:previewSort,onSort:togglePreviewSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"가용재고(g)",sortKey:"avail",sort:previewSort,onSort:togglePreviewSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"필요량(g)",sortKey:"need",sort:previewSort,onSort:togglePreviewSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"부족량(g)",sortKey:"short",sort:previewSort,onSort:togglePreviewSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"대체원료",sortKey:"alternatives",sort:previewSort,onSort:togglePreviewSort})), display.length === 0 ? /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
     colSpan: 6,
     style: {
       ...TD,
       textAlign: "center",
       color: C.green
     }
-  }, "✓ ", viewMode === "short" ? "부족 원료 없음" : "소요 원료 없음")) : display.map(({
+  }, "✓ ", viewMode === "short" ? "부족 원료 없음" : "소요 원료 없음")) : sortedDisplay.map(({
     m,
     need,
     avail,
@@ -4261,7 +4378,49 @@ function ProductionPage({
     }, alts.length > 0 && /*#__PURE__*/React.createElement("span", {
       style: badge(short < 0 && altStock > 0 ? "b" : "gray")
     }, alts.length, "종")));
-  })))))), tab === "hist" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  })))))), tab === "needs" && /*#__PURE__*/React.createElement("div", null,
+    /*#__PURE__*/React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 } },
+      /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: C.muted } }, "미완료 생산계획 ", activePlans.length, "건의 원료 소요량입니다. 입고예정에는 발주완료·입고예정 수량이 포함됩니다."),
+      /*#__PURE__*/React.createElement("button", { style: btn(), onClick: () => csvDownload(
+        ["No.", "구분", "원료명", "업체", "기존코드", "신규코드", "사용제품", "제품코드", "현재재고(g)", "입고예정(g)", "가용재고(g)", "계획소요(g)", "부족량(g)"],
+        sortedActiveMaterialRows.map((row, index) => [index + 1, row.category, row.material.name, row.material.vendor, row.material.oldCode || "", row.material.newCode || "", row.productNames, row.productCodes, row.currentStock, row.plannedIncoming, row.available, row.need, row.shortage]),
+        "미완료생산계획_원료소요_" + td() + ".xlsx"
+      ) }, "⬇ 엑셀 다운로드")
+    ),
+    activeMaterialRows.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { padding: 30, textAlign: "center", color: C.muted } }, "미완료 생산계획의 소요 원료가 없습니다.") :
+    /*#__PURE__*/React.createElement("div", { style: { overflowX: "auto" } }, /*#__PURE__*/React.createElement("table", { style: TBL },
+      /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null,
+        /*#__PURE__*/React.createElement("th", { style: TH }, "No."),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "구분", sortKey: "category", sort: needSort, onSort: toggleNeedSort }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "원료명", sortKey: "name", sort: needSort, onSort: toggleNeedSort }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "업체", sortKey: "vendor", sort: needSort, onSort: toggleNeedSort }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "기존코드", sortKey: "oldCode", sort: needSort, onSort: toggleNeedSort }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "신규코드", sortKey: "newCode", sort: needSort, onSort: toggleNeedSort }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "사용제품", sortKey: "productNames", sort: needSort, onSort: toggleNeedSort }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "제품코드", sortKey: "productCodes", sort: needSort, onSort: toggleNeedSort }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "현재재고(g)", sortKey: "currentStock", sort: needSort, onSort: toggleNeedSort, right: true }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "입고예정(g)", sortKey: "plannedIncoming", sort: needSort, onSort: toggleNeedSort, right: true }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "가용재고(g)", sortKey: "available", sort: needSort, onSort: toggleNeedSort, right: true }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "계획소요(g)", sortKey: "need", sort: needSort, onSort: toggleNeedSort, right: true }),
+        /*#__PURE__*/React.createElement(SortableTh, { label: "부족량(g)", sortKey: "shortage", sort: needSort, onSort: toggleNeedSort, right: true })
+      )),
+      /*#__PURE__*/React.createElement("tbody", null, sortedActiveMaterialRows.map((row, index) => /*#__PURE__*/React.createElement("tr", { key: row.material.id },
+        /*#__PURE__*/React.createElement("td", { style: { ...TD, color: C.muted, textAlign: "center" } }, index + 1),
+        /*#__PURE__*/React.createElement("td", { style: TD }, row.category),
+        /*#__PURE__*/React.createElement("td", { style: TD }, /*#__PURE__*/React.createElement("b", null, row.material.name)),
+        /*#__PURE__*/React.createElement("td", { style: { ...TD, color: C.muted } }, row.material.vendor || "-"),
+        /*#__PURE__*/React.createElement("td", { style: { ...TD, color: C.muted, fontSize: 10 } }, row.material.oldCode || "-"),
+        /*#__PURE__*/React.createElement("td", { style: { ...TD, color: C.blue, fontSize: 10 } }, row.material.newCode || "-"),
+        /*#__PURE__*/React.createElement("td", { style: { ...TD, fontSize: 10, whiteSpace: "normal" } }, row.productNames || "-"),
+        /*#__PURE__*/React.createElement("td", { style: { ...TD, fontSize: 10, whiteSpace: "normal" } }, row.productCodes || "-"),
+        /*#__PURE__*/React.createElement("td", { style: TDR }, fmt(row.currentStock)),
+        /*#__PURE__*/React.createElement("td", { style: { ...TDR, color: C.blue } }, fmt(row.plannedIncoming)),
+        /*#__PURE__*/React.createElement("td", { style: TDR }, fmt(row.available)),
+        /*#__PURE__*/React.createElement("td", { style: TDR }, fmt(Math.round(row.need))),
+        /*#__PURE__*/React.createElement("td", { style: { ...TDR, color: row.shortage > 0 ? C.red : C.green, fontWeight: 600 } }, row.shortage > 0 ? fmt(Math.ceil(row.shortage)) : "충분")
+      )))
+    ))
+  ), tab === "hist" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
@@ -4287,17 +4446,13 @@ function ProductionPage({
     }
   }, /*#__PURE__*/React.createElement("table", {
     style: TBL
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "제품명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "생산일"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "계획량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "실제생산량(g)"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "상태"), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null,
+  /*#__PURE__*/React.createElement(SortableTh, { label: "제품명", sortKey: "product", sort: planSort, onSort: togglePlanSort }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "제품코드", sortKey: "code", sort: planSort, onSort: togglePlanSort }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "생산일", sortKey: "productionDate", sort: planSort, onSort: togglePlanSort }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "계획량(g)", sortKey: "qty", sort: planSort, onSort: togglePlanSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "실제생산량(g)", sortKey: "actualQty", sort: planSort, onSort: togglePlanSort, right: true }),
+  /*#__PURE__*/React.createElement(SortableTh, { label: "상태", sortKey: "status", sort: planSort, onSort: togglePlanSort }), /*#__PURE__*/React.createElement("th", {
     style: TH
   }, "액션")), plans.map(p => {
     const r = rcpById(p.recipeId);
@@ -4318,6 +4473,8 @@ function ProductionPage({
     }, /*#__PURE__*/React.createElement("td", {
       style: TD
     }, r?.name || "?"), /*#__PURE__*/React.createElement("td", {
+      style: { ...TD, color: C.blue, fontSize: 10 }
+    }, r?.code || "-"), /*#__PURE__*/React.createElement("td", {
       style: TD
     }, isEdit ? /*#__PURE__*/React.createElement("input", {
       type: "date",
@@ -4588,6 +4745,7 @@ function StocktakePage({
   const [q, setQ] = useState("");
   const [pasteMode, setPasteMode] = useState(false);
   const [pasteText, setPasteText] = useState("");
+  const [tableSort, toggleTableSort] = useTableSort("category", "asc");
   const INNO_RATIO = {
     "MAT005": 0.15,
     "MAT006": 0.15,
@@ -4595,7 +4753,14 @@ function StocktakePage({
     "MAT008": 0.50
   };
   const INNO_ID = "MAT004";
-  const shown = st.materials.filter(m => !q || m.name.toLowerCase().includes(q.toLowerCase()) || m.newCode.includes(q) || materialCategory(m).toLowerCase().includes(q.toLowerCase())).sort(compareMaterials);
+  const shown = sortTableRows(st.materials.filter(m => !q || m.name.toLowerCase().includes(q.toLowerCase()) || m.newCode.includes(q) || materialCategory(m).toLowerCase().includes(q.toLowerCase())), tableSort, {
+    category: m => materialCategory(m),
+    name: m => m.name,
+    vendor: m => m.vendor,
+    newCode: m => m.newCode,
+    stock: m => Number(vals[m.id]?.stock ?? m.stock) || 0,
+    incoming: m => Number(vals[m.id]?.incoming ?? m.incoming) || 0
+  });
   const doConfirm = () => {
     if (Object.keys(dirty).length === 0) {
       showToast("변경된 값이 없습니다.");
@@ -4763,17 +4928,13 @@ function StocktakePage({
     }
   }, /*#__PURE__*/React.createElement("table", {
     style: TBL
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {style: TH}, "No."), /*#__PURE__*/React.createElement("th", {style: TH}, "구분"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "원료명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "업체"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "신규코드"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "현재재고(g)"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "입고예정(g)")), shown.map((m, index) => /*#__PURE__*/React.createElement("tr", {
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {style: TH}, "No."),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"구분",sortKey:"category",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"신규코드",sortKey:"newCode",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"현재재고(g)",sortKey:"stock",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"입고예정(g)",sortKey:"incoming",sort:tableSort,onSort:toggleTableSort,right:true})), shown.map((m, index) => /*#__PURE__*/React.createElement("tr", {
     key: m.id,
     style: {
       background: dirty[m.id + ".stock"] || dirty[m.id + ".incoming"] ? "#eff4ff" : ""
@@ -4863,7 +5024,14 @@ function GroupPage({
     name: ""
   });
   const [srchQ, setSrchQ] = useState("");
+  const [tableSort, toggleTableSort] = useTableSort("name", "asc");
   const sg = sel ? st.matGroups.find(g => g.id === sel) : null;
+  const groupMaterials = sg ? sortTableRows(sg.matIds.map(id => matById(id)).filter(Boolean), tableSort, {
+    name: m => m.name,
+    vendor: m => m.vendor,
+    newCode: m => m.newCode,
+    stock: m => Number(m.stock) || 0
+  }) : [];
   const addGroup = () => {
     if (!form.name.trim()) {
       showToast("그룹명을 입력하세요.");
@@ -5061,19 +5229,14 @@ function GroupPage({
     }
   }, "생산계획 부족원료 화면에서 대체원료 재고를 함께 확인할 수 있습니다."), /*#__PURE__*/React.createElement("table", {
     style: TBL
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null,
+  /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"업체",sortKey:"vendor",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"신규코드",sortKey:"newCode",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"현재재고(g)",sortKey:"stock",sort:tableSort,onSort:toggleTableSort,right:true}), /*#__PURE__*/React.createElement("th", {
     style: TH
-  }, "원료명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "업체"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "신규코드"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "현재재고(g)"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  })), sg.matIds.map(id => {
-    const m = matById(id);
-    if (!m) return null;
+  })), groupMaterials.map(m => {
+    const id = m.id;
     return /*#__PURE__*/React.createElement("tr", {
       key: id
     }, /*#__PURE__*/React.createElement("td", {
@@ -5419,6 +5582,7 @@ function VendorPage({
 }) {
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(null);
+  const [tableSort, toggleTableSort] = useTableSort("name", "asc");
   const filt = st.vendors.filter(v => {
     const ql = q.trim().toLowerCase();
     if (!ql) return true;
@@ -5430,6 +5594,13 @@ function VendorPage({
     });
   }).sort((a, b) => a.name.localeCompare(b.name, "ko"));
   const sv = sel ? st.vendors.find(v => v.id === sel) : null;
+  const vendorMaterials = sv ? sortTableRows(sv.matIds.map(id => matById(id)).filter(Boolean), tableSort, {
+    name: m => m.name,
+    newCode: m => m.newCode,
+    oldCode: m => m.oldCode,
+    stock: m => Number(m.stock) || 0,
+    status: m => Number(m.stock) || 0
+  }) : [];
   return /*#__PURE__*/React.createElement("div", {
     style: css.body
   }, /*#__PURE__*/React.createElement("div", {
@@ -5490,10 +5661,7 @@ function VendorPage({
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: btn(),
-    onClick: () => csvDownload(["원료명", "신규코드", "기존코드", "현재재고(g)"], sv.matIds.map(id => {
-      const m = matById(id);
-      return [m?.name || "", m?.newCode || "", m?.oldCode || "", m?.stock || 0];
-    }), sv.name + "_원료목록.csv")
+    onClick: () => csvDownload(["원료명", "신규코드", "기존코드", "현재재고(g)"], vendorMaterials.map(m => [m.name || "", m.newCode || "", m.oldCode || "", m.stock || 0]), sv.name + "_원료목록.csv")
   }, "⬇ 다운로드"), /*#__PURE__*/React.createElement("button", {
     style: btn("p"),
     onClick: () => {
@@ -5510,19 +5678,13 @@ function VendorPage({
     style: css.mb
   }, /*#__PURE__*/React.createElement("table", {
     style: TBL
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "원료명"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "신규코드"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "기존코드"), /*#__PURE__*/React.createElement("th", {
-    style: THR
-  }, "현재재고(g)"), /*#__PURE__*/React.createElement("th", {
-    style: TH
-  }, "상태")), sv.matIds.map(id => {
-    const m = matById(id);
-    if (!m) return null;
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null,
+  /*#__PURE__*/React.createElement(SortableTh, {label:"원료명",sortKey:"name",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"신규코드",sortKey:"newCode",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"기존코드",sortKey:"oldCode",sort:tableSort,onSort:toggleTableSort}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"현재재고(g)",sortKey:"stock",sort:tableSort,onSort:toggleTableSort,right:true}),
+  /*#__PURE__*/React.createElement(SortableTh, {label:"상태",sortKey:"status",sort:tableSort,onSort:toggleTableSort})), vendorMaterials.map(m => {
+    const id = m.id;
     return /*#__PURE__*/React.createElement("tr", {
       key: id
     }, /*#__PURE__*/React.createElement("td", {
